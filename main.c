@@ -24,6 +24,11 @@ node* rightRotate(node* root, node* node);
 node* leftRotate(node* root, node* node);
 void inOrderVisit(node* root);
 node* searchNode(node* root, int data);
+node* RBDelete(node* root, int data);
+node* searchMinimum(node* root);
+node* searchMaximum(node* root);
+node* searchSuccessor(node* node);
+node* RBDeleteFixup(node* root, node* node);
 
 //imported functions
 void print2D(node* root);
@@ -50,6 +55,9 @@ int main(){
     }else{
         printf("root is null\n");
     }
+
+    for(int i = 0; i < N+1; i++)
+        printf("%d : %d\n", i, searchNode(root, i));
 
     return 0;
 }
@@ -304,19 +312,173 @@ void inOrderVisit(node* root){
  * @return pointer to the node containing the data; if isn't found then returns null
  */
 node* searchNode(node* root, int data){
-    if(data == root->data)
+    if (data == root->data)
         return root;
-    else if(data < root->data)
-        searchNode(root->left, data);
+    else if( root->data == -1)
+        return NULL;
+    else if (data < root->data)
+        return searchNode(root->left, data);
     else
-        searchNode(root->right, data);
+        return searchNode(root->right, data);
 }
 
+/**
+ * Deletes a data in the specified tree if present
+ * @param root : root of the specified tree
+ * @param data : data to delete
+ * @return pointer to the new root in case rotations modify the old root
+ */
+node* RBDelete(node* root, int data){
+    struct node* newRoot = root;
+    struct node* wanted = searchNode(root, data);
 
+    if(wanted != NULL){
 
+        //find which node is actually goind to be deleted
+        struct node* toDelete;
+        if(wanted->left->data == -1 || wanted->right->data == -1)
+            toDelete = wanted;
+        else
+            toDelete = searchSuccessor(wanted);
 
+        //find the subtree of the node to delete and adjust the pointers
+        struct node* subtree;
+        if(toDelete->left->data != -1)
+            subtree = toDelete->left;
+        else
+            subtree = toDelete->right;
 
+        if(subtree->data != -1){
+            subtree->parent = toDelete->parent;
+        }
 
+        if(toDelete->parent->data == -1)
+            newRoot = subtree;
+        else if(toDelete == toDelete->parent->left)
+            toDelete->parent->left = subtree;
+        else
+            toDelete->parent->right = subtree;
+
+        if(toDelete != wanted)
+            wanted->data = toDelete->data;
+
+        //if the deleted node is black then must be invoked the fixup function on the node that replaced the deleted one
+        if(toDelete->color == black)
+            newRoot = RBDeleteFixup(root, subtree);
+
+        free(toDelete);
+    }
+
+    return newRoot;
+}
+
+/**
+ * Fix red and black tree after deletion of a black node
+ * @param root : root of the specified tree
+ * @param node : node that replaced the one that has been deleted
+ * @return : pointer to the new root in case rotations modify the old root
+ */
+node* RBDeleteFixup(node* root, node* node){
+    struct node* father = node->parent;
+    struct node* newRoot = root;
+
+    //case if node is the left child
+    if(node == father->left){
+        struct node* brother = father->right;
+
+        //case 0 : node is red
+        if(node->color == red) {
+            node->color = black;
+        }
+
+            //case 1 : node is black, brother is red
+        else if(node->color == black && brother->color == red){
+            changeColor(brother);
+            changeColor(father);
+            newRoot = leftRotate(root, father);
+            newRoot = RBDeleteFixup(newRoot, node);
+        }
+
+            //case 2 : node is black, brother is black, nephews are black
+        else if(node->color == black && brother->color == black && brother->left->color == brother->right->color == black){
+            changeColor(brother);
+            newRoot = RBDeleteFixup(root, father);
+        }
+
+            //case 3 : node is black, brother is black, right-nephew is black &&  left-nephew is red
+        else if(node->color == black && brother->color == black && brother->right->color == black &&  brother->left->color == red){
+            changeColor(brother);
+            changeColor(brother->left);
+            newRoot = rightRotate(root, brother);
+            newRoot = RBDeleteFixup(newRoot, node);
+        }
+
+            //case 4 : node is black, brother is black, right-nephew is red
+        else{
+            brother->color = father->color;
+            father->color = black;
+            brother->right->color = black;
+            newRoot = leftRotate(root, father);
+        }
+    }
+        //case if node is the right child
+    else{}
+
+    return newRoot;
+}
+
+/**
+ * Returns the successor of a certain node
+ * @param node : node whose successor is desired
+ * @return pointer to successor node, returns NULL if has no successor
+ */
+node* searchSuccessor(node* node){
+
+    //if has a right subtree => the minimum is the minimum valor of that subtree
+    if(node->right->data != -1){
+        return searchMinimum(node->right);
+    }
+
+    //else the successor is the first parent node that has as left child the subtree in which node is inserted
+    struct node* father = node->parent;
+    while(father->data != -1 &&  father->right == node){
+        node = father;
+        father = father->parent;
+    }
+
+    if(father->data != -1)
+        return father;
+    else
+        return NULL;
+}
+
+/**
+ * Search the minimum valor of a specified tree
+ * @param root : root of the specified tree
+ * @return pointer to the node with minimum integer of the tree
+ */
+node* searchMinimum(node* root){
+    struct node* current = root;
+
+    while(current->left->data != -1){
+        current = current->left;
+    }
+    return current;
+}
+
+/**
+ * Search the maximum valor of a specified tree
+ * @param root : root of the specified tree
+ * @return pointer to the node with maximum integer of the tree
+ */
+node* searchMaximum(node* root){
+    struct node* current = root;
+
+    while(current->right->data != -1){
+        current = current->right;
+    }
+    return current;
+}
 
 //Imported functions
 //---------------------------------------------
