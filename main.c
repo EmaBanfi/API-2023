@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define COUNT 5
 #define N 20
+#define MAXLENGTH 32768
 
 enum color{red, black};
 
@@ -12,12 +14,22 @@ typedef struct node{
     struct node* parent;
     struct node* right;
     struct node* left;
+    struct node* carsRoot;
+    struct node* neighborsRoot;
 }node;
+
+typedef struct lightNode{
+    int data;
+    enum color color;
+    struct ligthNode* parent;
+    struct lightNode* right;
+    struct lightNode* left;
+}lightNode;
 
 //RB functions
 node* createNode(int data);
 node* createNilNode();
-node* RBInsert(node* root, int data);
+node* RBInsert(node* root, node* newNode);
 node* RBInsertFixup(node* root, node* node);
 void changeColor(node* node);
 node* rightRotate(node* root, node* node);
@@ -31,6 +43,9 @@ node* searchSuccessor(node* node);
 node* searchPredecessor(node* node);
 node* RBDeleteFixup(node* root, node* node);
 
+//Light RB functions
+lightNode* createLightNode(int data);
+
 //imported functions
 void print2D(node* root);
 void print2DUtil(node* root, int space);
@@ -39,36 +54,71 @@ void print2DUtil(node* root, int space);
 node* Nil;
 
 int main(){
-
+    int perry = 0, distance = 0, numOfCars = 0, autonomy = 0, start = 0, end = 0;
     Nil = createNilNode();
-    node* root = NULL;
-    for(int i = 1; i < N; i++) {
-        root = RBInsert(root, i);
+    node* stationsRoot = NULL;
+    node* newNode = NULL;
+    lightNode* newCar = NULL;
+    char line[MAXLENGTH] = {};
+    char * param;
+
+    while(fgets(line, sizeof(line), stdin)){
+
+        //aggiungi-stazione command
+        if(line[12] == 'z'){
+            param = strtok(line + sizeof(char)*18, " ");
+            distance = atoi(param);
+            param = strtok(NULL, " ");
+            numOfCars = atoi(param);
+            printf("command = %c\ndistance = %d\nnumOfCars = %d\n", line[12], distance, numOfCars);
+
+            for( int i = 0; i < numOfCars; i++){
+                param = strtok(NULL, " ");
+                autonomy = atoi(param);
+                printf("autonomy of car %d = %d\n", i, autonomy);
+            }
+        }
+
+            //demolisci-stazione command
+        else if(line[12] == 'a'){
+            param = strtok(line + sizeof(char)*19, " ");
+            distance = atoi(param);
+            printf("command = %c\ndistance = %d\n", line[12], distance);
+        }
+
+            //aggiungi-auto command
+        else if(line[12] == 'o'){
+            param = strtok(line + sizeof(char)*14, " ");
+            distance = atoi(param);
+            param = strtok(NULL, " ");
+            autonomy = atoi(param);
+            printf("command = %c\ndistance = %d\nautonomy = %d\n", line[12], distance, autonomy);
+        }
+
+            //rottama-auto command
+        else if(line[12] == '\0'){
+            param = strtok(line + sizeof(char)*13, " ");
+            distance = atoi(param);
+            param = strtok(NULL, " ");
+            autonomy = atoi(param);
+            printf("command = %c\ndistance = %d\nautonomy = %d\n", line[12], distance, autonomy);
+        }
+
+            //pianifica-percorso command
+        else{
+            param = strtok(line + sizeof(char)*19, " ");
+            start = atoi(param);
+            param = strtok(NULL, " ");
+            end = atoi(param);
+            printf("command = %c\nstart = %d\nend = %d\n", line[12], start, end);
+        }
     }
-
-    printf("red = %u\n", red);
-    printf("black = %u\n", black);
-
-    if(root != NULL){
-        printf("root = %d\nIn-Order visit :\n", root->data);
-        //inOrderVisit(root);
-        print2D(root);
-    }else{
-        printf("root is null\n");
-    }
-
-    printf("----\n");
-    for(int i = 1; i < 3; i++){
-        root = RBDelete(root, 10);
-        print2D(root);
-        printf("----\n");
-    }
-
-    printf("root = %d | %d\n", root, root->data);
 
     return 0;
 }
 
+//R&B Functions
+//--------------------------------------
 /**
  * Creates a new red node, with parent, right and left child initialised to null.
  * @param data : integer saved into the node
@@ -82,6 +132,8 @@ node* createNode(int data){
     newNode->parent = NULL;
     newNode->right = NULL;
     newNode->left = NULL;
+    newNode->carsRoot = NULL;
+    newNode->neighborsRoot = NULL;
 
     return newNode;
 }
@@ -97,6 +149,8 @@ node* createNilNode(){
     newNode->parent = NULL;
     newNode->right = NULL;
     newNode->left = NULL;
+    newNode->carsRoot = NULL;
+    newNode->neighborsRoot = NULL;
 
     return newNode;
 }
@@ -107,12 +161,12 @@ node* createNilNode(){
  * @param data : integer to add to the data structure.
  * @return pointer to the new root in case rotations modify the old root
  */
-node* RBInsert(node* root, int data){
+node* RBInsert(node* root, node* newNode){
     node* newRoot;
 
     //if the tree is empty => create a new root
     if(root == NULL){
-        root = createNode(data);
+        root = newNode;
         root->parent = Nil;
         root->left = Nil;
         root->right = Nil;
@@ -128,19 +182,18 @@ node* RBInsert(node* root, int data){
 
         while( currentNode->data != -1){
             lastValid = currentNode;
-            if(data < lastValid->data){
+            if(newNode->data < lastValid->data){
                 currentNode = currentNode->left;
             }else{
                 currentNode = currentNode->right;
             }
         }
 
-        node* newNode = createNode(data);
         newNode->parent = lastValid;
         newNode->right = Nil;
         newNode->left = Nil;
 
-        if(data < lastValid->data){
+        if(newNode->data < lastValid->data){
             lastValid->left = newNode;
         }else{
             lastValid->right = newNode;
@@ -570,6 +623,38 @@ node* searchMaximum(node* root){
     }
     return current;
 }
+
+/**
+ * Free the memory reserved for the specified tree
+ * @param root : root of the tree to free
+ */
+void freeTree(node* root){
+    if(root == Nil)
+        return;
+    freeTree(root->left);
+    freeTree(root->right);
+}
+
+//Light R&B functions
+//---------------------------------------------
+/**
+ * Creates a new red light-node, with parent, right and left child initialised to null.
+ * @param data : integer saved into the light-node
+ * @return pointer to the new light-node
+ */
+lightNode * createLightNode(int data){
+
+    lightNode * newNode = (lightNode*)malloc(sizeof(struct lightNode));
+    newNode->data = data;
+    newNode->color = red;
+    newNode->parent = NULL;
+    newNode->right = NULL;
+    newNode->left = NULL;
+
+    return newNode;
+}
+
+
 
 
 
