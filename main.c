@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #define COUNT 5
-#define N 10
+#define N 20
 
 enum color{red, black};
 
@@ -28,6 +28,7 @@ node* RBDelete(node* root, int data);
 node* searchMinimum(node* root);
 node* searchMaximum(node* root);
 node* searchSuccessor(node* node);
+node* searchPredecessor(node* node);
 node* RBDeleteFixup(node* root, node* node);
 
 //imported functions
@@ -41,7 +42,7 @@ int main(){
 
     Nil = createNilNode();
     node* root = NULL;
-    for(int i = 0; i < N; i++) {
+    for(int i = 1; i < N; i++) {
         root = RBInsert(root, i);
     }
 
@@ -56,8 +57,14 @@ int main(){
         printf("root is null\n");
     }
 
-    for(int i = 0; i < N+1; i++)
-        printf("%d : %d\n", i, searchNode(root, i));
+    printf("----\n");
+    for(int i = 1; i < 3; i++){
+        root = RBDelete(root, 10);
+        print2D(root);
+        printf("----\n");
+    }
+
+    printf("root = %d | %d\n", root, root->data);
 
     return 0;
 }
@@ -245,15 +252,18 @@ node* rightRotate(node* root, node* node){
     struct node* newRoot = root;
 
     //fix pointers of the nodes
-    b->parent = y;
+    if(b->data != -1)
+        b->parent = y;
     y->left = b;
     x->right = y;
     y->parent = x;
     x->parent = d;
-    if(y == d->left)
-        d->left = x;
-    else
-        d->right = x;
+    if(d->data != -1){
+        if(y == d->left)
+            d->left = x;
+        else
+            d->right = x;
+    }
 
     //if the rotated node was the old root, then a new root is settled
     if(y == root)
@@ -276,15 +286,19 @@ node* leftRotate(node* root, node* node){
     struct node* newRoot = root;
 
     //fix pointers of the nodes
-    b->parent = x;
+    if(b->data != -1)
+        b->parent = x;
     x->right = b;
     x->parent = y;
     y->left = x;
     y->parent = d;
-    if(x == d->left)
-        d->left = y;
-    else
-        d->right = y;
+    if(d->data != -1){
+        if(x == d->left)
+            d->left = y;
+        else
+            d->right = y;
+    }
+
 
     //if the rotated node was the old root, then a new root is settled
     if(x == root)
@@ -334,7 +348,7 @@ node* RBDelete(node* root, int data){
 
     if(wanted != NULL){
 
-        //find which node is actually goind to be deleted
+        //find which node is actually going to be deleted
         struct node* toDelete;
         if(wanted->left->data == -1 || wanted->right->data == -1)
             toDelete = wanted;
@@ -348,9 +362,13 @@ node* RBDelete(node* root, int data){
         else
             subtree = toDelete->right;
 
+        /*
         if(subtree->data != -1){
             subtree->parent = toDelete->parent;
         }
+         */
+
+        subtree->parent = toDelete->parent;
 
         if(toDelete->parent->data == -1)
             newRoot = subtree;
@@ -364,9 +382,12 @@ node* RBDelete(node* root, int data){
 
         //if the deleted node is black then must be invoked the fixup function on the node that replaced the deleted one
         if(toDelete->color == black)
-            newRoot = RBDeleteFixup(root, subtree);
+            newRoot = RBDeleteFixup(newRoot, subtree);
 
         free(toDelete);
+    }
+    else{
+        printf("%d not found\n", data);
     }
 
     return newRoot;
@@ -382,47 +403,92 @@ node* RBDeleteFixup(node* root, node* node){
     struct node* father = node->parent;
     struct node* newRoot = root;
 
-    //case if node is the left child
-    if(node == father->left){
-        struct node* brother = father->right;
+    //if node reached the root of the tree => recolor it black
+    if(node == root)
+        node->color = black;
 
-        //case 0 : node is red
-        if(node->color == red) {
-            node->color = black;
+    else{
+        //case if node is the left child
+        if(node == father->left){
+            struct node* brother = father->right;
+
+            //case 0 : node is red
+            if(node->color == red) {
+                node->color = black;
+            }
+
+                //case 1 : node is black, brother is red
+            else if(node->color == black && brother->color == red){
+                changeColor(brother);
+                changeColor(father);
+                newRoot = leftRotate(root, father);
+                newRoot = RBDeleteFixup(newRoot, node);
+            }
+
+                //case 2 : node is black, brother is black, nephews are black
+            else if(node->color == black && brother->color == black && brother->left->color == black && brother->right->color == black){
+                changeColor(brother);
+                newRoot = RBDeleteFixup(root, father);
+            }
+
+                //case 3 : node is black, brother is black, right-nephew is black &&  left-nephew is red
+            else if(node->color == black && brother->color == black && brother->right->color == black &&  brother->left->color == red){
+                changeColor(brother);
+                changeColor(brother->left);
+                newRoot = rightRotate(root, brother);
+                newRoot = RBDeleteFixup(newRoot, node);
+            }
+
+                //case 4 : node is black, brother is black, right-nephew is red
+            else{
+                brother->color = father->color;
+                father->color = black;
+                brother->right->color = black;
+                newRoot = leftRotate(root, father);
+            }
         }
-
-            //case 1 : node is black, brother is red
-        else if(node->color == black && brother->color == red){
-            changeColor(brother);
-            changeColor(father);
-            newRoot = leftRotate(root, father);
-            newRoot = RBDeleteFixup(newRoot, node);
-        }
-
-            //case 2 : node is black, brother is black, nephews are black
-        else if(node->color == black && brother->color == black && brother->left->color == brother->right->color == black){
-            changeColor(brother);
-            newRoot = RBDeleteFixup(root, father);
-        }
-
-            //case 3 : node is black, brother is black, right-nephew is black &&  left-nephew is red
-        else if(node->color == black && brother->color == black && brother->right->color == black &&  brother->left->color == red){
-            changeColor(brother);
-            changeColor(brother->left);
-            newRoot = rightRotate(root, brother);
-            newRoot = RBDeleteFixup(newRoot, node);
-        }
-
-            //case 4 : node is black, brother is black, right-nephew is red
+            //case if node is the right child
         else{
-            brother->color = father->color;
-            father->color = black;
-            brother->right->color = black;
-            newRoot = leftRotate(root, father);
+            struct node* brother = father->left;
+
+            //case 0 : node is red
+            if(node->color == red) {
+                node->color = black;
+            }
+
+                //case 1 : node is black, brother is red
+            else if(node->color == black && brother->color == red){
+                changeColor(brother);
+                changeColor(father);
+                newRoot = rightRotate(root, father);
+                newRoot = RBDeleteFixup(newRoot, node);
+            }
+
+                //case 2 : node is black, brother is black, nephews are black
+            else if(node->color == black && brother->color == black && brother->left->color == brother->right->color == black){
+                changeColor(brother);
+                newRoot = RBDeleteFixup(root, father);
+            }
+
+                //case 3 : node is black, brother is black, left-nephew is black &&  right-nephew is red
+            else if(node->color == black && brother->color == black && brother->left->color == black &&  brother->right->color == red){
+                changeColor(brother);
+                changeColor(brother->right);
+                newRoot = leftRotate(root, brother);
+                newRoot = RBDeleteFixup(newRoot, node);
+            }
+
+                //case 4 : node is black, brother is black, left-nephew is red
+            else{
+                brother->color = father->color;
+                father->color = black;
+                brother->left->color = black;
+                newRoot = rightRotate(root, father);
+            }
         }
     }
-        //case if node is the right child
-    else{}
+
+    Nil->parent = NULL;
 
     return newRoot;
 }
@@ -442,6 +508,31 @@ node* searchSuccessor(node* node){
     //else the successor is the first parent node that has as left child the subtree in which node is inserted
     struct node* father = node->parent;
     while(father->data != -1 &&  father->right == node){
+        node = father;
+        father = father->parent;
+    }
+
+    if(father->data != -1)
+        return father;
+    else
+        return NULL;
+}
+
+/**
+ * Returns the predecessor of a certain node
+ * @param node : node whose predecessor is desired
+ * @return pointer to predecessor node, returns NULL if has no predecessor
+ */
+node* searchPredecessor(node* node){
+
+    //if has a right subtree => the maximum is the maximum valor of that subtree
+    if(node->left->data != -1){
+        return searchMaximum(node->left);
+    }
+
+    //else the successor is the first parent node that has as right child the subtree in which node is inserted
+    struct node* father = node->parent;
+    while(father->data != -1 &&  father->left == node){
         node = father;
         father = father->parent;
     }
@@ -480,6 +571,8 @@ node* searchMaximum(node* root){
     return current;
 }
 
+
+
 //Imported functions
 //---------------------------------------------
 
@@ -514,22 +607,3 @@ void print2D(node* root)
     // Pass initial space count as 0
     print2DUtil(root, 0);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
