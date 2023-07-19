@@ -29,19 +29,20 @@ typedef struct lightNode{
 //RB functions
 node* createNode(int data);
 node* createNilNode();
-node* RBInsert(node* root, node* newNode);
-node* RBInsertFixup(node* root, node* node);
+node* RBInsert(node** root, int data);
+void RBInsertFixup(node** root, node* node);
 void changeColor(node* node);
-node* rightRotate(node* root, node* node);
-node* leftRotate(node* root, node* node);
+void rightRotate(node** root, node* node);
+void leftRotate(node** root, node* node);
 void inOrderVisit(node* root);
 node* searchNode(node* root, int data);
-node* RBDelete(node* root, int data);
+void RBDelete(node** root, int data);
 node* searchMinimum(node* root);
 node* searchMaximum(node* root);
 node* searchSuccessor(node* node);
 node* searchPredecessor(node* node);
-node* RBDeleteFixup(node* root, node* node);
+void RBDeleteFixup(node** root, node* node);
+void freeTree(node* root);
 
 //Light RB functions
 lightNode* createLightNode(int data);
@@ -65,6 +66,8 @@ void freeLightTree(lightNode* root);
 //imported functions
 void print2D(node* root);
 void print2DUtil(node* root, int space);
+void lightPrint2D(lightNode* root);
+void lightPrint2DUtil(lightNode* root, int space);
 
 //Global variables
 node* Nil;
@@ -90,17 +93,29 @@ int main(){
             numOfCars = atoi(param);
             //printf("command = %c\ndistance = %d\nnumOfCars = %d\n", line[12], distance, numOfCars);
 
-            newNode = createNode(distance);
-            stationsRoot = RBInsert(stationsRoot, newNode);
+            newNode = RBInsert(&stationsRoot, distance);
 
-            for( int i = 0; i < numOfCars; i++){
-                param = strtok(NULL, " ");
-                autonomy = atoi(param);
-                //printf("autonomy of car %d = %d\n", i, autonomy);
+            if(newNode != NULL){
+                for( int i = 0; i < numOfCars; i++){
+                    param = strtok(NULL, " ");
+                    autonomy = atoi(param);
+                    //printf("autonomy of car %d = %d\n", i, autonomy);
 
-                newCar = createLightNode(autonomy);
-                newNode->carsRoot = lightRBInsert(newNode->carsRoot, newCar);
+                    newCar = createLightNode(autonomy);
+                    newNode->carsRoot = lightRBInsert(newNode->carsRoot, newCar);
+                }
+
+                printf("aggiunta\n");
+                if(newNode->carsRoot != NULL){
+                    lightPrint2D(newNode->carsRoot);
+                }
+                printf("---------------------\n");
             }
+            else
+                printf("non aggiunta\n");
+
+            print2D(stationsRoot);
+            printf("---------------------\n");
         }
 
             //demolisci-stazione command
@@ -116,7 +131,7 @@ int main(){
             distance = atoi(param);
             param = strtok(NULL, " ");
             autonomy = atoi(param);
-            printf("command = %c\ndistance = %d\nautonomy = %d\n", line[12], distance, autonomy);
+            //printf("command = %c\ndistance = %d\nautonomy = %d\n", line[12], distance, autonomy);
         }
 
             //rottama-auto command
@@ -125,7 +140,7 @@ int main(){
             distance = atoi(param);
             param = strtok(NULL, " ");
             autonomy = atoi(param);
-            printf("command = %c\ndistance = %d\nautonomy = %d\n", line[12], distance, autonomy);
+            //printf("command = %c\ndistance = %d\nautonomy = %d\n", line[12], distance, autonomy);
         }
 
             //pianifica-percorso command
@@ -134,7 +149,7 @@ int main(){
             start = atoi(param);
             param = strtok(NULL, " ");
             end = atoi(param);
-            printf("command = %c\nstart = %d\nend = %d\n", line[12], start, end);
+            //printf("command = %c\nstart = %d\nend = %d\n", line[12], start, end);
         }
     }
 
@@ -180,74 +195,75 @@ node* createNilNode(){
 }
 
 /**
- * Adds a new node to the specified tree.
+ * Adds a new node to the specified tree, if isn't already present.
  * @param root : root of the specified tree.
- * @param newNode : node to add to the data structure.
- * @return pointer to the new root in case rotations modify the old root
+ * @param data : node to add to the data structure.
+ * @return pointer to the new inserted node if isn't already present, else null.
  */
-node* RBInsert(node* root, node* newNode){
-    node* newRoot;
-
+node* RBInsert(node** root, int data){
+    node* newNode = NULL;
 
     //if the tree is empty => create a new root
-    if(root == NULL){
-        root = newNode;
-        root->parent = Nil;
-        root->left = Nil;
-        root->right = Nil;
-        root->color = black;
+    if((*root) == NULL){
+        newNode = createNode(data);
+        newNode->parent = Nil;
+        newNode->left = Nil;
+        newNode->right = Nil;
+        newNode->color = black;
 
-        newRoot = root;
+        *root = newNode;
     }
 
         //search te correct position for the new node
     else{
-        node* currentNode = root;
+        node* currentNode = *root;
         node* lastValid;
 
-        while(currentNode->data != -1){
+        while(currentNode->data != -1 && currentNode->data != data){
             lastValid = currentNode;
-            if(newNode->data < lastValid->data){
+            if(data < lastValid->data){
                 currentNode = currentNode->left;
             }else{
                 currentNode = currentNode->right;
             }
         }
 
-        newNode->parent = lastValid;
-        newNode->right = Nil;
-        newNode->left = Nil;
+        //add the new station if isn't already present
+        if(currentNode->data != data){
+            newNode = createNode(data);
+            newNode->parent = lastValid;
+            newNode->right = Nil;
+            newNode->left = Nil;
 
-        if(newNode->data < lastValid->data){
-            lastValid->left = newNode;
-        }else{
-            lastValid->right = newNode;
+            if(newNode->data < lastValid->data){
+                lastValid->left = newNode;
+            }else{
+                lastValid->right = newNode;
+            }
+
+            RBInsertFixup(root, newNode);
         }
-
-        newRoot = RBInsertFixup(root, newNode);
     }
-    return newRoot;
+    return newNode;
 }
 
 /**
  * Fix the red and black tree after insertion of a red node.
  * @param root : root of the specified tree.
  * @param node : node just inserted to fix.
- * @return pointer to the new root in case rotations modify the old root
  */
-node* RBInsertFixup(node* root, node* node){
-    struct node* newRoot = root;
+void RBInsertFixup(node** root, node* node){
     struct node* father = node->parent;
     struct node* grandfather = father->parent;
 
     //case 0 : node is the root
-    if(root == node){
+    if(*root == node){
         node->color = black;
     }
 
         //case 1 : father is black
     else if(father->color == black){
-        return newRoot;
+        return;
     }
 
         //parent is grandfather's left child
@@ -259,20 +275,20 @@ node* RBInsertFixup(node* root, node* node){
             changeColor(father);
             changeColor(grandfather);
             changeColor(uncle);
-            newRoot = RBInsertFixup(root, grandfather);
+            RBInsertFixup(root, grandfather);
         }
 
             //case 3 : uncle is black, node is right child
         else if(uncle->color == black && node == father->right){
-            newRoot = leftRotate(root, father);
-            newRoot = RBInsertFixup(newRoot, father);
+            leftRotate(root, father);
+            RBInsertFixup(root, father);
         }
 
             //case 4 : uncle is black, node is left child
         else{
             changeColor(father);
             changeColor(grandfather);
-            newRoot = rightRotate(root, grandfather);
+            rightRotate(root, grandfather);
         }
     }
 
@@ -285,24 +301,22 @@ node* RBInsertFixup(node* root, node* node){
             changeColor(father);
             changeColor(grandfather);
             changeColor(uncle);
-            newRoot = RBInsertFixup(root, grandfather);
+            RBInsertFixup(root, grandfather);
         }
 
             //case 3 : uncle is black, node is left child
         else if(uncle->color == black && node == father->left){
-            newRoot = rightRotate(root, father);
-            newRoot = RBInsertFixup(newRoot, father);
+            rightRotate(root, father);
+            RBInsertFixup(root, father);
         }
 
             //case 4 : uncle is black, node is right child
         else{
             changeColor(father);
             changeColor(grandfather);
-            newRoot = leftRotate(root, grandfather);
+            leftRotate(root, grandfather);
         }
     }
-
-    return newRoot;
 }
 
 /**
@@ -320,14 +334,12 @@ void changeColor(node* node){
  * Performs a right rotation to the specified node.
  * @param root : root of node's tree
  * @param node : node to right-rotate
- * @return the new root if the old root is rotated, else the old root
  */
-node* rightRotate(node* root, node* node){
+void rightRotate(node** root, node* node){
     struct node* y = node;
     struct node* x = node->left;
     struct node* b = x->right;
     struct node* d = node->parent;
-    struct node* newRoot = root;
 
     //fix pointers of the nodes
     if(b->data != -1)
@@ -344,24 +356,20 @@ node* rightRotate(node* root, node* node){
     }
 
     //if the rotated node was the old root, then a new root is settled
-    if(y == root)
-        newRoot = x;
-
-    return newRoot;
+    if(y == *root)
+        *root = x;
 }
 
 /**
  * Performs a left rotation to the specified node.
  * @param root : root of node's tree
  * @param node : node to left-rotate
- * @return the new root if the old root is rotated, else the old root
  */
-node* leftRotate(node* root, node* node){
+void leftRotate(node** root, node* node){
     struct node* x = node;
     struct node* y = node->right;
     struct node* d = node->parent;
     struct node* b = y->left;
-    struct node* newRoot = root;
 
     //fix pointers of the nodes
     if(b->data != -1)
@@ -379,10 +387,8 @@ node* leftRotate(node* root, node* node){
 
 
     //if the rotated node was the old root, then a new root is settled
-    if(x == root)
-        newRoot = y;
-
-    return newRoot;
+    if(x == *root)
+        *root = y;
 }
 
 /**
@@ -418,11 +424,9 @@ node* searchNode(node* root, int data){
  * Deletes a data in the specified tree if present
  * @param root : root of the specified tree
  * @param data : data to delete
- * @return pointer to the new root in case rotations modify the old root
  */
-node* RBDelete(node* root, int data){
-    struct node* newRoot = root;
-    struct node* wanted = searchNode(root, data);
+void RBDelete(node** root, int data){
+    struct node* wanted = searchNode(*root, data);
 
     if(wanted != NULL){
 
@@ -449,7 +453,7 @@ node* RBDelete(node* root, int data){
         subtree->parent = toDelete->parent;
 
         if(toDelete->parent->data == -1)
-            newRoot = subtree;
+            *root = subtree;
         else if(toDelete == toDelete->parent->left)
             toDelete->parent->left = subtree;
         else
@@ -460,29 +464,25 @@ node* RBDelete(node* root, int data){
 
         //if the deleted node is black then must be invoked the fixup function on the node that replaced the deleted one
         if(toDelete->color == black)
-            newRoot = RBDeleteFixup(newRoot, subtree);
+            RBDeleteFixup(root, subtree);
 
         free(toDelete);
     }
     else{
         printf("%d not found\n", data);
     }
-
-    return newRoot;
 }
 
 /**
  * Fix red and black tree after deletion of a black node
  * @param root : root of the specified tree
  * @param node : node that replaced the one that has been deleted
- * @return : pointer to the new root in case rotations modify the old root
  */
-node* RBDeleteFixup(node* root, node* node){
+void RBDeleteFixup(node** root, node* node){
     struct node* father = node->parent;
-    struct node* newRoot = root;
 
     //if node reached the root of the tree => recolor it black
-    if(node == root)
+    if(node == *root)
         node->color = black;
 
     else{
@@ -499,22 +499,22 @@ node* RBDeleteFixup(node* root, node* node){
             else if(node->color == black && brother->color == red){
                 changeColor(brother);
                 changeColor(father);
-                newRoot = leftRotate(root, father);
-                newRoot = RBDeleteFixup(newRoot, node);
+                leftRotate(root, father);
+                RBDeleteFixup(root, node);
             }
 
                 //case 2 : node is black, brother is black, nephews are black
             else if(node->color == black && brother->color == black && brother->left->color == black && brother->right->color == black){
                 changeColor(brother);
-                newRoot = RBDeleteFixup(root, father);
+                RBDeleteFixup(root, father);
             }
 
                 //case 3 : node is black, brother is black, right-nephew is black &&  left-nephew is red
             else if(node->color == black && brother->color == black && brother->right->color == black &&  brother->left->color == red){
                 changeColor(brother);
                 changeColor(brother->left);
-                newRoot = rightRotate(root, brother);
-                newRoot = RBDeleteFixup(newRoot, node);
+                rightRotate(root, brother);
+                RBDeleteFixup(root, node);
             }
 
                 //case 4 : node is black, brother is black, right-nephew is red
@@ -522,7 +522,7 @@ node* RBDeleteFixup(node* root, node* node){
                 brother->color = father->color;
                 father->color = black;
                 brother->right->color = black;
-                newRoot = leftRotate(root, father);
+                leftRotate(root, father);
             }
         }
             //case if node is the right child
@@ -538,22 +538,22 @@ node* RBDeleteFixup(node* root, node* node){
             else if(node->color == black && brother->color == red){
                 changeColor(brother);
                 changeColor(father);
-                newRoot = rightRotate(root, father);
-                newRoot = RBDeleteFixup(newRoot, node);
+                rightRotate(root, father);
+                RBDeleteFixup(root, node);
             }
 
                 //case 2 : node is black, brother is black, nephews are black
             else if(node->color == black && brother->color == black && brother->left->color == brother->right->color == black){
                 changeColor(brother);
-                newRoot = RBDeleteFixup(root, father);
+                RBDeleteFixup(root, father);
             }
 
                 //case 3 : node is black, brother is black, left-nephew is black &&  right-nephew is red
             else if(node->color == black && brother->color == black && brother->left->color == black &&  brother->right->color == red){
                 changeColor(brother);
                 changeColor(brother->right);
-                newRoot = leftRotate(root, brother);
-                newRoot = RBDeleteFixup(newRoot, node);
+                leftRotate(root, brother);
+                RBDeleteFixup(root, node);
             }
 
                 //case 4 : node is black, brother is black, left-nephew is red
@@ -561,14 +561,12 @@ node* RBDeleteFixup(node* root, node* node){
                 brother->color = father->color;
                 father->color = black;
                 brother->left->color = black;
-                newRoot = rightRotate(root, father);
+                rightRotate(root, father);
             }
         }
     }
 
     Nil->parent = NULL;
-
-    return newRoot;
 }
 
 /**
@@ -1172,6 +1170,7 @@ void freeLightTree(lightNode* root){
         return;
     freeLightTree(root->left);
     freeLightTree(root->right);
+    free(root);
 }
 
 //Imported functions
@@ -1208,3 +1207,53 @@ void print2D(node* root)
     // Pass initial space count as 0
     print2DUtil(root, 0);
 }
+
+// Function to print binary tree in 2D
+// It does reverse inorder traversal
+void lightPrint2DUtil(lightNode* root, int space)
+{
+    // Base case
+    if (root->data == -1)
+        return;
+
+    // Increase distance between levels
+    space += COUNT;
+
+    // Process right child first
+    lightPrint2DUtil(root->right, space);
+
+    // Print current node after space
+    // count
+    printf("\n");
+    for (int i = COUNT; i < space; i++)
+        printf(" ");
+    printf("%d|%u\n", root->data, root->color);
+
+    // Process left child
+    lightPrint2DUtil(root->left, space);
+}
+
+// Wrapper over print2DUtil()
+void lightPrint2D(lightNode* root)
+{
+    // Pass initial space count as 0
+    lightPrint2DUtil(root, 0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
