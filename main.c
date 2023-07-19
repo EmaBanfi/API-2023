@@ -36,7 +36,7 @@ void rightRotate(node** root, node* node);
 void leftRotate(node** root, node* node);
 void inOrderVisit(node* root);
 node* searchNode(node* root, int data);
-void RBDelete(node** root, int data);
+int RBDelete(node** root, int data);
 node* searchMinimum(node* root);
 node* searchMaximum(node* root);
 node* searchSuccessor(node* node);
@@ -72,12 +72,14 @@ void lightPrint2DUtil(lightNode* root, int space);
 //Global variables
 node* Nil;
 lightNode* lightNil;
+void treeprint(node *root, int level);
 
 int main(){
     int perry = 0, distance = 0, numOfCars = 0, autonomy = 0, start = 0, end = 0;
     Nil = createNilNode();
     lightNil = createNilLightNode();
-    node* stationsRoot = NULL;
+    node* stationsRoot = Nil;
+    node* test;
     node* newNode = NULL;
     lightNode* newCar = NULL;
     char line[MAXLENGTH] = {};
@@ -91,7 +93,6 @@ int main(){
             distance = atoi(param);
             param = strtok(NULL, " ");
             numOfCars = atoi(param);
-            //printf("command = %c\ndistance = %d\nnumOfCars = %d\n", line[12], distance, numOfCars);
 
             newNode = RBInsert(&stationsRoot, distance);
 
@@ -99,30 +100,38 @@ int main(){
                 for( int i = 0; i < numOfCars; i++){
                     param = strtok(NULL, " ");
                     autonomy = atoi(param);
-                    //printf("autonomy of car %d = %d\n", i, autonomy);
 
                     newCar = createLightNode(autonomy);
                     newNode->carsRoot = lightRBInsert(newNode->carsRoot, newCar);
                 }
 
                 printf("aggiunta\n");
-                if(newNode->carsRoot != NULL){
-                    lightPrint2D(newNode->carsRoot);
-                }
-                printf("---------------------\n");
             }
             else
                 printf("non aggiunta\n");
-
-            print2D(stationsRoot);
-            printf("---------------------\n");
         }
 
             //demolisci-stazione command
         else if(line[12] == 'a'){
             param = strtok(line + sizeof(char)*19, " ");
             distance = atoi(param);
-            //printf("command = %c\ndistance = %d\n", line[12], distance);
+
+            if(distance == 6551)
+                treeprint(stationsRoot, 0);
+
+            if(stationsRoot != Nil){
+                //print2D(stationsRoot);
+                int ornitorinco = RBDelete(&stationsRoot, distance);
+                if(ornitorinco == 1){
+                    printf("demolita\n");
+                    //print2D(stationsRoot);
+                    //printf("--------------------------------------------\n");
+                }
+                else
+                    printf("non demolita\n");
+            }
+            else
+                printf("non demolita\n");
         }
 
             //aggiungi-auto command
@@ -131,16 +140,30 @@ int main(){
             distance = atoi(param);
             param = strtok(NULL, " ");
             autonomy = atoi(param);
-            //printf("command = %c\ndistance = %d\nautonomy = %d\n", line[12], distance, autonomy);
+
+            newNode = searchNode(stationsRoot, distance);
+            if(newNode != NULL){
+                newNode->carsRoot = lightRBInsert(newNode->carsRoot, createLightNode(autonomy));
+                printf("aggiunta\n");
+            }else{
+                printf("non aggiunta\n");
+            }
         }
 
             //rottama-auto command
-        else if(line[12] == '\0'){
+        else if(line[12] == ' '){
             param = strtok(line + sizeof(char)*13, " ");
             distance = atoi(param);
             param = strtok(NULL, " ");
             autonomy = atoi(param);
-            //printf("command = %c\ndistance = %d\nautonomy = %d\n", line[12], distance, autonomy);
+
+            newNode = searchNode(stationsRoot, distance);
+            if(newNode != NULL && newNode->carsRoot != lightNil){
+                newNode->carsRoot = lightRBDelete(newNode->carsRoot, autonomy);
+            }
+            else{
+                printf("non rottamata\n");
+            }
         }
 
             //pianifica-percorso command
@@ -149,7 +172,6 @@ int main(){
             start = atoi(param);
             param = strtok(NULL, " ");
             end = atoi(param);
-            //printf("command = %c\nstart = %d\nend = %d\n", line[12], start, end);
         }
     }
 
@@ -171,7 +193,7 @@ node* createNode(int data){
     newNode->parent = NULL;
     newNode->right = NULL;
     newNode->left = NULL;
-    newNode->carsRoot = NULL;
+    newNode->carsRoot = lightNil;
     newNode->neighborsRoot = NULL;
 
     return newNode;
@@ -204,7 +226,7 @@ node* RBInsert(node** root, int data){
     node* newNode = NULL;
 
     //if the tree is empty => create a new root
-    if((*root) == NULL){
+    if((*root) == Nil){
         newNode = createNode(data);
         newNode->parent = Nil;
         newNode->left = Nil;
@@ -424,9 +446,11 @@ node* searchNode(node* root, int data){
  * Deletes a data in the specified tree if present
  * @param root : root of the specified tree
  * @param data : data to delete
+ * @return 1 if data was found and deleted, 0 else
  */
-void RBDelete(node** root, int data){
+int RBDelete(node** root, int data){
     struct node* wanted = searchNode(*root, data);
+    lightNode* carsToDelete = NULL;
 
     if(wanted != NULL){
 
@@ -459,17 +483,25 @@ void RBDelete(node** root, int data){
         else
             toDelete->parent->right = subtree;
 
-        if(toDelete != wanted)
+        //if node to delete isn't the wanted node => copy the second node's data and cars to the first one to keep
+        if(toDelete != wanted){
             wanted->data = toDelete->data;
+            carsToDelete = wanted->carsRoot;
+            wanted->carsRoot = toDelete->carsRoot;
+        }
 
         //if the deleted node is black then must be invoked the fixup function on the node that replaced the deleted one
         if(toDelete->color == black)
             RBDeleteFixup(root, subtree);
 
+        if(carsToDelete != NULL){
+            freeLightTree(carsToDelete);
+        }
         free(toDelete);
+        return 1;
     }
     else{
-        printf("%d not found\n", data);
+        return 0;
     }
 }
 
@@ -489,6 +521,11 @@ void RBDeleteFixup(node** root, node* node){
         //case if node is the left child
         if(node == father->left){
             struct node* brother = father->right;
+            /*
+            if(brother == Nil){
+                print2D(*root);
+            }
+             */
 
             //case 0 : node is red
             if(node->color == red) {
@@ -543,7 +580,7 @@ void RBDeleteFixup(node** root, node* node){
             }
 
                 //case 2 : node is black, brother is black, nephews are black
-            else if(node->color == black && brother->color == black && brother->left->color == brother->right->color == black){
+            else if(node->color == black && brother->color == black && brother->left->color ==black && brother->right->color == black){
                 changeColor(brother);
                 RBDeleteFixup(root, father);
             }
@@ -702,7 +739,7 @@ lightNode* lightRBInsert(lightNode* root, lightNode* newNode){
     lightNode* newRoot;
 
     //if the tree is empty => create a new root
-    if(root == NULL){
+    if(root == lightNil){
         root = newNode;
         root->parent = lightNil;
         root->left = lightNil;
@@ -916,6 +953,7 @@ void lightInOrderVisit(lightNode* root){
  * @return pointer to the light-node containing the data; if isn't found then returns null
  */
 lightNode* lightSearchNode(lightNode* root, int data){
+
     if (data == root->data)
         return root;
     else if( root->data == -1)
@@ -935,6 +973,7 @@ lightNode* lightSearchNode(lightNode* root, int data){
 lightNode* lightRBDelete(lightNode* root, int data){
     lightNode* newRoot = root;
     lightNode* wanted = lightSearchNode(root, data);
+
 
     if(wanted != NULL){
 
@@ -975,9 +1014,10 @@ lightNode* lightRBDelete(lightNode* root, int data){
             newRoot = lightRBDeleteFixup(newRoot, subtree);
 
         free(toDelete);
+        printf("rottamata\n");
     }
     else{
-        printf("%d not found\n", data);
+        printf("non rottamata\n");
     }
 
     return newRoot;
@@ -1055,7 +1095,7 @@ lightNode* lightRBDeleteFixup(lightNode* root, lightNode* node){
             }
 
                 //case 2 : node is black, brother is black, nephews are black
-            else if(node->color == black && brother->color == black && brother->left->color == brother->right->color == black){
+            else if(node->color == black && brother->color == black && brother->left->color == black && brother->right->color == black){
                 lightChangeColor(brother);
                 newRoot = lightRBDeleteFixup(root, father);
             }
@@ -1240,20 +1280,13 @@ void lightPrint2D(lightNode* root)
     lightPrint2DUtil(root, 0);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void treeprint(node *root, int level)
+{
+    if (root == Nil)
+        return;
+    for (int i = 0; i < level; i++)
+        printf(i == level - 1 ? "|-" : "  ");
+    printf("%d,%d\n", root->data, root->color);
+    treeprint(root->left, level + 1);
+    treeprint(root->right, level + 1);
+}
