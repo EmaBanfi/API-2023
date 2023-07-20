@@ -14,6 +14,7 @@ typedef struct node{
     struct node* parent;
     struct node* right;
     struct node* left;
+    int biggestCar;
     struct lightNode* carsRoot;
     struct lightNode* neighborsRoot;
 }node;
@@ -43,6 +44,7 @@ node* searchSuccessor(node* node);
 node* searchPredecessor(node* node);
 void RBDeleteFixup(node** root, node* node);
 void freeTree(node* root);
+void selectNeighbors(node* root, int min, int max);
 
 //Light RB functions
 lightNode* createLightNode(int data);
@@ -62,12 +64,18 @@ lightNode* lightSearchMinimum(lightNode* root);
 lightNode* lightSearchMaximum(lightNode* root);
 void freeLightTree(lightNode* root);
 
+//Graph functions
+void addToGraph(node* stationsRoot, node* node);
+void deleteEdges(node* root, int data);
+void addNewEdges(node* root, node* node, int min, int max);
+void removeOldEdges(node* root, node* node, int min, int max);
 
 //imported functions
 void print2D(node* root);
 void print2DUtil(node* root, int space);
 void lightPrint2D(lightNode* root);
 void lightPrint2DUtil(lightNode* root, int space);
+int fastAtoi(char* str);
 
 //Global variables
 node* Nil;
@@ -75,7 +83,7 @@ lightNode* lightNil;
 void treeprint(node *root, int level);
 
 int main(){
-    int perry = 0, distance = 0, numOfCars = 0, autonomy = 0, start = 0, end = 0;
+    int perry = 0, distance = 0, numOfCars = 0, autonomy = 0, start = 0, end = 0, min = 0, max = 0, temp = 0;
     Nil = createNilNode();
     lightNil = createNilLightNode();
     node* stationsRoot = Nil;
@@ -96,14 +104,22 @@ int main(){
 
             newNode = RBInsert(&stationsRoot, distance);
 
+            temp = 0;
+            max = 0;
             if(newNode != NULL){
                 for( int i = 0; i < numOfCars; i++){
                     param = strtok(NULL, " ");
                     autonomy = atoi(param);
+                    temp = autonomy;
+                    if(temp > max)
+                        max = temp;
 
                     newCar = createLightNode(autonomy);
                     newNode->carsRoot = lightRBInsert(newNode->carsRoot, newCar);
                 }
+                newNode->biggestCar = max;
+
+                addToGraph(stationsRoot, newNode);
 
                 printf("aggiunta\n");
             }
@@ -116,16 +132,10 @@ int main(){
             param = strtok(line + sizeof(char)*19, " ");
             distance = atoi(param);
 
-            if(distance == 6551)
-                treeprint(stationsRoot, 0);
-
             if(stationsRoot != Nil){
-                //print2D(stationsRoot);
                 int ornitorinco = RBDelete(&stationsRoot, distance);
                 if(ornitorinco == 1){
                     printf("demolita\n");
-                    //print2D(stationsRoot);
-                    //printf("--------------------------------------------\n");
                 }
                 else
                     printf("non demolita\n");
@@ -144,6 +154,17 @@ int main(){
             newNode = searchNode(stationsRoot, distance);
             if(newNode != NULL){
                 newNode->carsRoot = lightRBInsert(newNode->carsRoot, createLightNode(autonomy));
+
+                //if the new car is the new biggest car => new edges to insert
+                if(newNode->biggestCar < autonomy){
+                    min = newNode->data - autonomy < 0 ? 0 : newNode->data - autonomy;
+                    max = newNode->data - newNode->biggestCar - 1;
+                    if(max > 0)
+                        addNewEdges(stationsRoot,newNode, min, max);
+                    addNewEdges(stationsRoot, newNode, newNode->data + newNode->biggestCar + 1, newNode->data + autonomy);
+                    newNode->biggestCar = autonomy;
+                }
+
                 printf("aggiunta\n");
             }else{
                 printf("non aggiunta\n");
@@ -159,7 +180,20 @@ int main(){
 
             newNode = searchNode(stationsRoot, distance);
             if(newNode != NULL && newNode->carsRoot != lightNil){
+                temp = newNode->biggestCar;
                 newNode->carsRoot = lightRBDelete(newNode->carsRoot, autonomy);
+
+                //if deleting the biggest => verify the new biggest car and if different => delete unreachable edges
+                if(temp == autonomy){
+                    lightNode *newBiggestCar = lightSearchMaximum(newNode->carsRoot);
+                    if(newBiggestCar->data != temp){
+                        min = newNode->data - temp < 0 ? 0 : newNode->data - temp;
+                        max = newNode->data - newBiggestCar->data - 1;
+                        if(max > 0)
+                            removeOldEdges(stationsRoot, newNode, min, max);
+                        removeOldEdges(stationsRoot, newNode, newNode->data + newBiggestCar->data + 1, newNode->data + temp);
+                    }
+                }
             }
             else{
                 printf("non rottamata\n");
@@ -172,6 +206,9 @@ int main(){
             start = atoi(param);
             param = strtok(NULL, " ");
             end = atoi(param);
+
+
+
         }
     }
 
@@ -194,7 +231,8 @@ node* createNode(int data){
     newNode->right = NULL;
     newNode->left = NULL;
     newNode->carsRoot = lightNil;
-    newNode->neighborsRoot = NULL;
+    newNode->neighborsRoot = lightNil;
+    newNode->biggestCar = 0;
 
     return newNode;
 }
@@ -212,6 +250,7 @@ node* createNilNode(){
     newNode->left = NULL;
     newNode->carsRoot = NULL;
     newNode->neighborsRoot = NULL;
+    newNode->biggestCar = 0;
 
     return newNode;
 }
@@ -443,7 +482,7 @@ node* searchNode(node* root, int data){
 }
 
 /**
- * Deletes a data in the specified tree if present
+ * Deletes a data in the stations-tree if present, deleting also his cars-tree and deleting him from the graph
  * @param root : root of the specified tree
  * @param data : data to delete
  * @return 1 if data was found and deleted, 0 else
@@ -451,6 +490,7 @@ node* searchNode(node* root, int data){
 int RBDelete(node** root, int data){
     struct node* wanted = searchNode(*root, data);
     lightNode* carsToDelete = NULL;
+    lightNode* neighborsToDelete = NULL;
 
     if(wanted != NULL){
 
@@ -483,11 +523,14 @@ int RBDelete(node** root, int data){
         else
             toDelete->parent->right = subtree;
 
-        //if node to delete isn't the wanted node => copy the second node's data and cars to the first one to keep
+        //if node to delete isn't the wanted node => copy the second node's data, cars, biggestCar and neighbors to the first one to keep
         if(toDelete != wanted){
             wanted->data = toDelete->data;
             carsToDelete = wanted->carsRoot;
+            neighborsToDelete = wanted->neighborsRoot;
             wanted->carsRoot = toDelete->carsRoot;
+            wanted->neighborsRoot = toDelete->neighborsRoot;
+            wanted->biggestCar = toDelete->biggestCar;
         }
 
         //if the deleted node is black then must be invoked the fixup function on the node that replaced the deleted one
@@ -497,6 +540,14 @@ int RBDelete(node** root, int data){
         if(carsToDelete != NULL){
             freeLightTree(carsToDelete);
         }
+
+        if(neighborsToDelete != NULL){
+            freeLightTree(neighborsToDelete);
+        }
+
+        //delete edges pointed to the deleted node from the graph
+        deleteEdges(*root, data);
+
         free(toDelete);
         return 1;
     }
@@ -974,7 +1025,6 @@ lightNode* lightRBDelete(lightNode* root, int data){
     lightNode* newRoot = root;
     lightNode* wanted = lightSearchNode(root, data);
 
-
     if(wanted != NULL){
 
         //find which node is actually going to be deleted
@@ -1213,6 +1263,111 @@ void freeLightTree(lightNode* root){
     free(root);
 }
 
+
+//Graph functions
+//---------------------------------------------
+
+/**
+ * Add a node to the graph, making a in-order visit to the stations-tree
+ * @param stationsRoot : tree containing all the stations
+ * @param node : pointer to the node to add into the graph
+ */
+void addToGraph(node* stationsRoot, node* node){
+    if(stationsRoot != Nil) {
+        addToGraph(stationsRoot->left, node);
+
+        if(stationsRoot->data != node->data){
+
+            //if i can reach him => add him to my neighbors
+            int minReach = node->data - node->biggestCar;
+            if(minReach<0)
+                minReach=0;
+            int maxReach = node->data + node->biggestCar;
+
+            if(stationsRoot->data >= minReach && stationsRoot->data <= maxReach){
+                node->neighborsRoot = lightRBInsert(node->neighborsRoot, createLightNode(stationsRoot->data));
+            }
+
+            //if he can reach me => add me to his neighbors
+            minReach = stationsRoot->data - stationsRoot->biggestCar;
+            if(minReach < 0)
+                minReach = 0;
+            maxReach = stationsRoot->data + stationsRoot->biggestCar;
+
+            if(node->data >= minReach && node->data <= maxReach){
+                stationsRoot->neighborsRoot = lightRBInsert(stationsRoot->neighborsRoot, createLightNode(node->data));
+            }
+        }
+
+        addToGraph(stationsRoot->right, node);
+    }
+}
+
+/**
+ * Delete the edges pointed to "data" station from other nodes of the graph
+ * @param root : root of the stations-tree
+ * @param data : removed station whose edges need to be deleted
+ */
+void deleteEdges(node* root, int data){
+    if(root != Nil){
+        deleteEdges(root->left, data);
+
+        if(root->data != data){
+            //if i-th node can reach me => perform a deletion of the edge
+            int minReach = root->data - root->biggestCar;
+            if(minReach < 0)
+                minReach = 0;
+            int maxReach = root->data + root->biggestCar;
+
+            if(data >= minReach && data <= maxReach)
+                root->neighborsRoot = lightRBDelete(root->neighborsRoot, data);
+        }
+
+        deleteEdges(root->right, data);
+    }
+}
+
+/**
+ * Add new edges when a new biggestCar for the specified node is inserted in cars-tree
+ * @param root : root of the stations-tree
+ * @param node : node with a new biggest car
+ * @param min : minimum reachable distance by node
+ * @param max : maximum reachable distance by node
+ */
+void addNewEdges(node* root, node* node, int min, int max){
+    if(root != Nil){
+
+        if(root->data > min)
+            addNewEdges(root->left, node, min, max);
+
+        if(root != node && root->data >= min && root->data <= max)
+            node->neighborsRoot = lightRBInsert(node->neighborsRoot, createLightNode(root->data));
+
+        if(root->data < max)
+            addNewEdges(root->left, node, min, max);
+    }
+}
+
+/**
+ * Remove old edges from a node when they are no more reachable when the biggestCar for the specified node is removed in cars-tree
+ * @param root : root of the stations-tree
+ * @param node : node with a new biggest car
+ * @param min : minimum reachable distance by node
+ * @param max : maximum reachable distance by node
+ */
+void removeOldEdges(node* root, node* node, int min, int max){
+    if(root != Nil){
+        if(root->data > min)
+            removeOldEdges(root->left, node, min, max);
+
+        if(root != node && root->data >= min && root->data <= max)
+            node->neighborsRoot = lightRBDelete(node->neighborsRoot, root->data);
+
+        if(root->data < max)
+            removeOldEdges(root->left, node, min, max);
+    }
+}
+
 //Imported functions
 //---------------------------------------------
 
@@ -1289,4 +1444,13 @@ void treeprint(node *root, int level)
     printf("%d,%d\n", root->data, root->color);
     treeprint(root->left, level + 1);
     treeprint(root->right, level + 1);
+}
+
+
+int fastAtoi(char * str){
+    int val = 0;
+    while(*str &&  (*str) != ' '){
+        val = val*10 + (*str++ - '0');
+    }
+    return val;
 }
