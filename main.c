@@ -4,93 +4,123 @@
 
 #define COUNT 5
 #define N 20
-#define MAXLENGTH 32768
+#define DIM 32768
 
 enum color{red, black};
 
-typedef struct node{
+typedef struct stationNode{
     int data;
     enum color color;
-    struct node* parent;
-    struct node* right;
-    struct node* left;
+    struct stationNode* parent;
+    struct stationNode* right;
+    struct stationNode* left;
     int biggestCar;
-    struct lightNode* carsRoot;
-    struct lightNode* neighborsRoot;
-}node;
+    struct carNode* carsRoot;
+    struct carNode* neighborsRoot;
+}stationNode;
 
-typedef struct lightNode{
+typedef struct carNode{
     int data;
     enum color color;
-    struct lightNode* parent;
-    struct lightNode* right;
-    struct lightNode* left;
-}lightNode;
+    struct carNode* parent;
+    struct carNode* right;
+    struct carNode* left;
+}carNode;
 
-//RB functions
-node* createNode(int data);
-node* createNilNode();
-node* RBInsert(node** root, int data);
-void RBInsertFixup(node** root, node* node);
-void changeColor(node* node);
-void rightRotate(node** root, node* node);
-void leftRotate(node** root, node* node);
-void inOrderVisit(node* root);
-node* searchNode(node* root, int data);
-int RBDelete(node** root, int data);
-node* searchMinimum(node* root);
-node* searchMaximum(node* root);
-node* searchSuccessor(node* node);
-node* searchPredecessor(node* node);
-void RBDeleteFixup(node** root, node* node);
-void freeTree(node* root);
-void selectNeighbors(node* root, int min, int max);
+typedef struct neighborNode{
+    int data;
+    struct neighborNode* generator;
+    enum color color;
+    struct  neighborNode* parent;
+    struct neighborNode* right;
+    struct neighborNode* left;
+}neighborNode;
 
-//Light RB functions
-lightNode* createLightNode(int data);
-lightNode* createNilLightNode();
-lightNode* lightRBInsert(lightNode* root, lightNode* newNode);
-lightNode* lightRBInsertFixup(lightNode* root, lightNode* node);
-void lightChangeColor(lightNode* node);
-lightNode* lightRightRotate(lightNode* root, lightNode* node);
-lightNode* lightLeftRotate(lightNode* root, lightNode* node);
-void lightInOrderVisit(lightNode* root);
-lightNode* lightSearchNode(lightNode* root, int data);
-lightNode* lightRBDelete(lightNode* root, int data);
-lightNode* lightRBDeleteFixup(lightNode* root, lightNode* node);
-lightNode* lightSearchPredecessor(lightNode* node);
-lightNode* lightSearchSuccessor(lightNode* node);
-lightNode* lightSearchMinimum(lightNode* root);
-lightNode* lightSearchMaximum(lightNode* root);
-void freeLightTree(lightNode* root);
+typedef struct borderNode{
+    int data;
+    struct borderNode* next;
+}borderNode;
 
-//Graph functions
-void addToGraph(node* stationsRoot, node* node);
-void deleteEdges(node* root, int data);
-void addNewEdges(node* root, node* node, int min, int max);
-void removeOldEdges(node* root, node* node, int min, int max);
+//stations-tree functions
+stationNode* createNode(int data);
+stationNode* createNilNode();
+stationNode* RBInsert(stationNode** root, int data);
+void RBInsertFixup(stationNode** root, stationNode* node);
+void changeColor(stationNode* node);
+void rightRotate(stationNode** root, stationNode* node);
+void leftRotate(stationNode** root, stationNode* node);
+void inOrderVisit(stationNode* root);
+stationNode* searchNode(stationNode* root, int data);
+int RBDelete(stationNode** root, int data);
+stationNode* searchMinimum(stationNode* root);
+stationNode* searchMaximum(stationNode* root);
+stationNode* searchSuccessor(stationNode* node);
+stationNode* searchPredecessor(stationNode* node);
+void RBDeleteFixup(stationNode** root, stationNode* node);
+void freeTree(stationNode* root);
+void selectNeighbors(stationNode* root, int min, int max);
+
+//cars-tree functions
+carNode* createLightNode(int data);
+carNode* createNilLightNode();
+carNode* lightRBInsert(carNode* root, carNode* newNode);
+carNode* lightRBInsertFixup(carNode* root, carNode* node);
+void lightChangeColor(carNode* node);
+carNode* lightRightRotate(carNode* root, carNode* node);
+carNode* lightLeftRotate(carNode* root, carNode* node);
+void lightInOrderVisit(carNode* root);
+carNode* lightSearchNode(carNode* root, int data);
+carNode* lightRBDelete(carNode* root, int data);
+carNode* lightRBDeleteFixup(carNode* root, carNode* node);
+carNode* lightSearchPredecessor(carNode* node);
+carNode* lightSearchSuccessor(carNode* node);
+carNode* lightSearchMinimum(carNode* root);
+carNode* lightSearchMaximum(carNode* root);
+void freeLightTree(carNode* root);
+
+//neighbors-tree functions
+neighborNode* createNeighborNode(int data, neighborNode* generator);
+neighborNode* createNilNeighborNode();
+neighborNode* neighborRBInsert(neighborNode** root, neighborNode* generator, int data);
+void neighborRBInsertFixup(neighborNode** root, neighborNode* node);
+void neighborChangeColor(neighborNode* node);
+void neighborRightRotate(neighborNode** root, neighborNode* node);
+void neighborLeftRotate(neighborNode** root, neighborNode* node);
+void freeNeighborTree(neighborNode* root);
+neighborNode* searchNeighborNode(neighborNode* root, int data);
+
+//queue functions
+borderNode* createBorderNode(int data);
+void enqueue(borderNode** head, borderNode** tail, borderNode* node);
+int dequeue(borderNode** head, borderNode** tail);
 
 //imported functions
-void print2D(node* root);
-void print2DUtil(node* root, int space);
-void lightPrint2D(lightNode* root);
-void lightPrint2DUtil(lightNode* root, int space);
+void print2D(stationNode* root);
+void print2DUtil(stationNode* root, int space);
+void lightPrint2D(carNode* root);
+void lightPrint2DUtil(carNode* root, int space);
 int fastAtoi(char* str);
+void treeprint(stationNode *root, int level);
+
+//Route functions
+neighborNode* searchRoute(stationNode* stationsRoot, neighborNode** candidatesNodesRoot, neighborNode* generator, borderNode** head, borderNode** tail, int min, int max, int end, int currentBorder);
+void routePlanner(stationNode* stationsRoot, int start, int end);
 
 //Global variables
-node* Nil;
-lightNode* lightNil;
-void treeprint(node *root, int level);
+stationNode* Nil;
+carNode* lightNil;
+neighborNode* neighborNil;
 
 int main(){
     int perry = 0, distance = 0, numOfCars = 0, autonomy = 0, start = 0, end = 0, min = 0, max = 0, temp = 0;
     Nil = createNilNode();
     lightNil = createNilLightNode();
-    node* stationsRoot = Nil;
-    node* test;
-    node* newNode = NULL;
-    lightNode* newCar = NULL;
-    char line[MAXLENGTH] = {};
+    neighborNil = createNilNeighborNode();
+    stationNode* stationsRoot = Nil;
+    stationNode* test;
+    stationNode* newNode = NULL;
+    carNode* newCar = NULL;
+    char line[DIM] = {};
     char * param;
 
     while(fgets(line, sizeof(line), stdin)){
@@ -119,12 +149,11 @@ int main(){
                 }
                 newNode->biggestCar = max;
 
-                addToGraph(stationsRoot, newNode);
-
                 printf("aggiunta\n");
             }
             else
                 printf("non aggiunta\n");
+
         }
 
             //demolisci-stazione command
@@ -155,13 +184,7 @@ int main(){
             if(newNode != NULL){
                 newNode->carsRoot = lightRBInsert(newNode->carsRoot, createLightNode(autonomy));
 
-                //if the new car is the new biggest car => new edges to insert
                 if(newNode->biggestCar < autonomy){
-                    min = newNode->data - autonomy < 0 ? 0 : newNode->data - autonomy;
-                    max = newNode->data - newNode->biggestCar - 1;
-                    if(max > 0)
-                        addNewEdges(stationsRoot,newNode, min, max);
-                    addNewEdges(stationsRoot, newNode, newNode->data + newNode->biggestCar + 1, newNode->data + autonomy);
                     newNode->biggestCar = autonomy;
                 }
 
@@ -180,20 +203,9 @@ int main(){
 
             newNode = searchNode(stationsRoot, distance);
             if(newNode != NULL && newNode->carsRoot != lightNil){
-                temp = newNode->biggestCar;
                 newNode->carsRoot = lightRBDelete(newNode->carsRoot, autonomy);
-
-                //if deleting the biggest => verify the new biggest car and if different => delete unreachable edges
-                if(temp == autonomy){
-                    lightNode *newBiggestCar = lightSearchMaximum(newNode->carsRoot);
-                    if(newBiggestCar->data != temp){
-                        min = newNode->data - temp < 0 ? 0 : newNode->data - temp;
-                        max = newNode->data - newBiggestCar->data - 1;
-                        if(max > 0)
-                            removeOldEdges(stationsRoot, newNode, min, max);
-                        removeOldEdges(stationsRoot, newNode, newNode->data + newBiggestCar->data + 1, newNode->data + temp);
-                    }
-                }
+                if(autonomy == newNode->biggestCar)
+                    newNode->biggestCar = lightSearchMaximum(newNode->carsRoot)->data;
             }
             else{
                 printf("non rottamata\n");
@@ -207,24 +219,34 @@ int main(){
             param = strtok(NULL, " ");
             end = atoi(param);
 
+            routePlanner(stationsRoot, start, end);
 
+            /* 1) inserisci start nella pila della frontiera e nell'albero dei visitati
+             * 2) poppa dalla frontiera il nodo e trova i vicini del nodo tenendo conto di goal e senza tornare indietro, poi inseriscili nei visitati con il puntatore al nodo generatore usando la visita in order
+             * 3) itera fintanto che non trovi goal nei visitati o finisce frontiera
+             * 4) se hai trovato goal stampa la strada dei generatori al contrario
+             * 5) libera la memoria da tutto lo schifo usato
+             */
 
         }
     }
-
+    freeTree(stationsRoot);
+    free(Nil);
+    free(lightNil);
+    free(neighborNil);
     return 0;
 }
 
 //R&B Functions
 //--------------------------------------
 /**
- * Creates a new red node, with parent, right and left child initialised to null.
- * @param data : integer saved into the node
- * @return pointer to the new node
+ * Creates a new red stationNode, with parent, right and left child initialised to null.
+ * @param data : integer saved into the stationNode
+ * @return pointer to the new stationNode
  */
-node* createNode(int data){
+stationNode* createNode(int data){
 
-    node* newNode = (node*)malloc(sizeof(struct node));
+    stationNode* newNode = (stationNode*)malloc(sizeof(struct stationNode));
     newNode->data = data;
     newNode->color = red;
     newNode->parent = NULL;
@@ -238,11 +260,11 @@ node* createNode(int data){
 }
 
 /**
- * Creates a Nil node for a tree data structure, initialised with black color and all pointers to NULL.
+ * Creates a Nil stationNode for a tree data structure, initialised with black color and all pointers to NULL.
  */
-node* createNilNode(){
+stationNode* createNilNode(){
 
-    node* newNode = (node*)malloc(sizeof(struct node));
+    stationNode* newNode = (stationNode*)malloc(sizeof(struct stationNode));
     newNode->data = -1;
     newNode->color = black;
     newNode->parent = NULL;
@@ -256,13 +278,13 @@ node* createNilNode(){
 }
 
 /**
- * Adds a new node to the specified tree, if isn't already present.
+ * Adds a new stationNode to the specified tree, if isn't already present.
  * @param root : root of the specified tree.
- * @param data : node to add to the data structure.
- * @return pointer to the new inserted node if isn't already present, else null.
+ * @param data : stationNode to add to the data structure.
+ * @return pointer to the new inserted stationNode if isn't already present, else null.
  */
-node* RBInsert(node** root, int data){
-    node* newNode = NULL;
+stationNode* RBInsert(stationNode** root, int data){
+    stationNode* newNode = NULL;
 
     //if the tree is empty => create a new root
     if((*root) == Nil){
@@ -275,10 +297,10 @@ node* RBInsert(node** root, int data){
         *root = newNode;
     }
 
-        //search te correct position for the new node
+        //search te correct position for the new stationNode
     else{
-        node* currentNode = *root;
-        node* lastValid;
+        stationNode* currentNode = *root;
+        stationNode* lastValid;
 
         while(currentNode->data != -1 && currentNode->data != data){
             lastValid = currentNode;
@@ -309,15 +331,15 @@ node* RBInsert(node** root, int data){
 }
 
 /**
- * Fix the red and black tree after insertion of a red node.
+ * Fix the red and black tree after insertion of a red stationNode.
  * @param root : root of the specified tree.
- * @param node : node just inserted to fix.
+ * @param node : stationNode just inserted to fix.
  */
-void RBInsertFixup(node** root, node* node){
-    struct node* father = node->parent;
-    struct node* grandfather = father->parent;
+void RBInsertFixup(stationNode** root, stationNode* node){
+    struct stationNode* father = node->parent;
+    struct stationNode* grandfather = father->parent;
 
-    //case 0 : node is the root
+    //case 0 : stationNode is the root
     if(*root == node){
         node->color = black;
     }
@@ -329,7 +351,7 @@ void RBInsertFixup(node** root, node* node){
 
         //parent is grandfather's left child
     else if(father == grandfather->left){
-        struct node* uncle = grandfather->right;
+        struct stationNode* uncle = grandfather->right;
 
         //case 2 : uncle is red
         if(uncle->color == red){
@@ -339,13 +361,13 @@ void RBInsertFixup(node** root, node* node){
             RBInsertFixup(root, grandfather);
         }
 
-            //case 3 : uncle is black, node is right child
+            //case 3 : uncle is black, stationNode is right child
         else if(uncle->color == black && node == father->right){
             leftRotate(root, father);
             RBInsertFixup(root, father);
         }
 
-            //case 4 : uncle is black, node is left child
+            //case 4 : uncle is black, stationNode is left child
         else{
             changeColor(father);
             changeColor(grandfather);
@@ -355,7 +377,7 @@ void RBInsertFixup(node** root, node* node){
 
         //parent is grandfather's right child
     else{
-        struct node* uncle = grandfather->left;
+        struct stationNode* uncle = grandfather->left;
 
         //case 2 : uncle is red
         if(uncle->color == red){
@@ -365,13 +387,13 @@ void RBInsertFixup(node** root, node* node){
             RBInsertFixup(root, grandfather);
         }
 
-            //case 3 : uncle is black, node is left child
+            //case 3 : uncle is black, stationNode is left child
         else if(uncle->color == black && node == father->left){
             rightRotate(root, father);
             RBInsertFixup(root, father);
         }
 
-            //case 4 : uncle is black, node is right child
+            //case 4 : uncle is black, stationNode is right child
         else{
             changeColor(father);
             changeColor(grandfather);
@@ -381,10 +403,10 @@ void RBInsertFixup(node** root, node* node){
 }
 
 /**
- * Changes the color of the specified node to the opposite color.
- * @param node : node to modify
+ * Changes the color of the specified stationNode to the opposite color.
+ * @param node : stationNode to modify
  */
-void changeColor(node* node){
+void changeColor(stationNode* node){
     if(node->color == red)
         node->color = black;
     else
@@ -392,15 +414,15 @@ void changeColor(node* node){
 }
 
 /**
- * Performs a right rotation to the specified node.
- * @param root : root of node's tree
- * @param node : node to right-rotate
+ * Performs a right rotation to the specified stationNode.
+ * @param root : root of stationNode's tree
+ * @param node : stationNode to right-rotate
  */
-void rightRotate(node** root, node* node){
-    struct node* y = node;
-    struct node* x = node->left;
-    struct node* b = x->right;
-    struct node* d = node->parent;
+void rightRotate(stationNode** root, stationNode* node){
+    struct stationNode* y = node;
+    struct stationNode* x = node->left;
+    struct stationNode* b = x->right;
+    struct stationNode* d = node->parent;
 
     //fix pointers of the nodes
     if(b->data != -1)
@@ -416,21 +438,21 @@ void rightRotate(node** root, node* node){
             d->right = x;
     }
 
-    //if the rotated node was the old root, then a new root is settled
+    //if the rotated stationNode was the old root, then a new root is settled
     if(y == *root)
         *root = x;
 }
 
 /**
- * Performs a left rotation to the specified node.
- * @param root : root of node's tree
- * @param node : node to left-rotate
+ * Performs a left rotation to the specified stationNode.
+ * @param root : root of stationNode's tree
+ * @param node : stationNode to left-rotate
  */
-void leftRotate(node** root, node* node){
-    struct node* x = node;
-    struct node* y = node->right;
-    struct node* d = node->parent;
-    struct node* b = y->left;
+void leftRotate(stationNode** root, stationNode* node){
+    struct stationNode* x = node;
+    struct stationNode* y = node->right;
+    struct stationNode* d = node->parent;
+    struct stationNode* b = y->left;
 
     //fix pointers of the nodes
     if(b->data != -1)
@@ -447,7 +469,7 @@ void leftRotate(node** root, node* node){
     }
 
 
-    //if the rotated node was the old root, then a new root is settled
+    //if the rotated stationNode was the old root, then a new root is settled
     if(x == *root)
         *root = y;
 }
@@ -456,7 +478,7 @@ void leftRotate(node** root, node* node){
  * In-order visit of the specified tree
  * @param root : root of the specified tree to visit
  */
-void inOrderVisit(node* root){
+void inOrderVisit(stationNode* root){
     if(root->data != -1) {
         inOrderVisit(root->left);
         printf("%d ", root->data);
@@ -468,9 +490,9 @@ void inOrderVisit(node* root){
  * Perfmorms a search of an element in the specified tree
  * @param root : root of the specified tree
  * @param data : data to search in the tree
- * @return pointer to the node containing the data; if isn't found then returns null
+ * @return pointer to the stationNode containing the data; if isn't found then returns null
  */
-node* searchNode(node* root, int data){
+stationNode* searchNode(stationNode* root, int data){
     if (data == root->data)
         return root;
     else if( root->data == -1)
@@ -487,22 +509,22 @@ node* searchNode(node* root, int data){
  * @param data : data to delete
  * @return 1 if data was found and deleted, 0 else
  */
-int RBDelete(node** root, int data){
-    struct node* wanted = searchNode(*root, data);
-    lightNode* carsToDelete = NULL;
-    lightNode* neighborsToDelete = NULL;
+int RBDelete(stationNode** root, int data){
+    struct stationNode* wanted = searchNode(*root, data);
+    carNode* carsToDelete = NULL;
+    carNode* neighborsToDelete = NULL;
 
     if(wanted != NULL){
 
-        //find which node is actually going to be deleted
-        struct node* toDelete;
+        //find which stationNode is actually going to be deleted
+        struct stationNode* toDelete;
         if(wanted->left->data == -1 || wanted->right->data == -1)
             toDelete = wanted;
         else
             toDelete = searchSuccessor(wanted);
 
-        //find the subtree of the node to delete and adjust the pointers
-        struct node* subtree;
+        //find the subtree of the stationNode to delete and adjust the pointers
+        struct stationNode* subtree;
         if(toDelete->left->data != -1)
             subtree = toDelete->left;
         else
@@ -523,30 +545,21 @@ int RBDelete(node** root, int data){
         else
             toDelete->parent->right = subtree;
 
-        //if node to delete isn't the wanted node => copy the second node's data, cars, biggestCar and neighbors to the first one to keep
+        //if stationNode to delete isn't the wanted stationNode => copy the second stationNode's data, cars, biggestCar and neighbors to the first one to keep
         if(toDelete != wanted){
             wanted->data = toDelete->data;
             carsToDelete = wanted->carsRoot;
-            neighborsToDelete = wanted->neighborsRoot;
             wanted->carsRoot = toDelete->carsRoot;
-            wanted->neighborsRoot = toDelete->neighborsRoot;
             wanted->biggestCar = toDelete->biggestCar;
         }
 
-        //if the deleted node is black then must be invoked the fixup function on the node that replaced the deleted one
+        //if the deleted stationNode is black then must be invoked the fixup function on the stationNode that replaced the deleted one
         if(toDelete->color == black)
             RBDeleteFixup(root, subtree);
 
         if(carsToDelete != NULL){
             freeLightTree(carsToDelete);
         }
-
-        if(neighborsToDelete != NULL){
-            freeLightTree(neighborsToDelete);
-        }
-
-        //delete edges pointed to the deleted node from the graph
-        deleteEdges(*root, data);
 
         free(toDelete);
         return 1;
@@ -557,33 +570,33 @@ int RBDelete(node** root, int data){
 }
 
 /**
- * Fix red and black tree after deletion of a black node
+ * Fix red and black tree after deletion of a black stationNode
  * @param root : root of the specified tree
- * @param node : node that replaced the one that has been deleted
+ * @param node : stationNode that replaced the one that has been deleted
  */
-void RBDeleteFixup(node** root, node* node){
-    struct node* father = node->parent;
+void RBDeleteFixup(stationNode** root, stationNode* node){
+    struct stationNode* father = node->parent;
 
-    //if node reached the root of the tree => recolor it black
+    //if stationNode reached the root of the tree => recolor it black
     if(node == *root)
         node->color = black;
 
     else{
-        //case if node is the left child
+        //case if stationNode is the left child
         if(node == father->left){
-            struct node* brother = father->right;
+            struct stationNode* brother = father->right;
             /*
             if(brother == Nil){
                 print2D(*root);
             }
              */
 
-            //case 0 : node is red
+            //case 0 : stationNode is red
             if(node->color == red) {
                 node->color = black;
             }
 
-                //case 1 : node is black, brother is red
+                //case 1 : stationNode is black, brother is red
             else if(node->color == black && brother->color == red){
                 changeColor(brother);
                 changeColor(father);
@@ -591,13 +604,13 @@ void RBDeleteFixup(node** root, node* node){
                 RBDeleteFixup(root, node);
             }
 
-                //case 2 : node is black, brother is black, nephews are black
+                //case 2 : stationNode is black, brother is black, nephews are black
             else if(node->color == black && brother->color == black && brother->left->color == black && brother->right->color == black){
                 changeColor(brother);
                 RBDeleteFixup(root, father);
             }
 
-                //case 3 : node is black, brother is black, right-nephew is black &&  left-nephew is red
+                //case 3 : stationNode is black, brother is black, right-nephew is black &&  left-nephew is red
             else if(node->color == black && brother->color == black && brother->right->color == black &&  brother->left->color == red){
                 changeColor(brother);
                 changeColor(brother->left);
@@ -605,7 +618,7 @@ void RBDeleteFixup(node** root, node* node){
                 RBDeleteFixup(root, node);
             }
 
-                //case 4 : node is black, brother is black, right-nephew is red
+                //case 4 : stationNode is black, brother is black, right-nephew is red
             else{
                 brother->color = father->color;
                 father->color = black;
@@ -613,16 +626,16 @@ void RBDeleteFixup(node** root, node* node){
                 leftRotate(root, father);
             }
         }
-            //case if node is the right child
+            //case if stationNode is the right child
         else{
-            struct node* brother = father->left;
+            struct stationNode* brother = father->left;
 
-            //case 0 : node is red
+            //case 0 : stationNode is red
             if(node->color == red) {
                 node->color = black;
             }
 
-                //case 1 : node is black, brother is red
+                //case 1 : stationNode is black, brother is red
             else if(node->color == black && brother->color == red){
                 changeColor(brother);
                 changeColor(father);
@@ -630,13 +643,13 @@ void RBDeleteFixup(node** root, node* node){
                 RBDeleteFixup(root, node);
             }
 
-                //case 2 : node is black, brother is black, nephews are black
+                //case 2 : stationNode is black, brother is black, nephews are black
             else if(node->color == black && brother->color == black && brother->left->color ==black && brother->right->color == black){
                 changeColor(brother);
                 RBDeleteFixup(root, father);
             }
 
-                //case 3 : node is black, brother is black, left-nephew is black &&  right-nephew is red
+                //case 3 : stationNode is black, brother is black, left-nephew is black &&  right-nephew is red
             else if(node->color == black && brother->color == black && brother->left->color == black &&  brother->right->color == red){
                 changeColor(brother);
                 changeColor(brother->right);
@@ -644,7 +657,7 @@ void RBDeleteFixup(node** root, node* node){
                 RBDeleteFixup(root, node);
             }
 
-                //case 4 : node is black, brother is black, left-nephew is red
+                //case 4 : stationNode is black, brother is black, left-nephew is red
             else{
                 brother->color = father->color;
                 father->color = black;
@@ -658,19 +671,19 @@ void RBDeleteFixup(node** root, node* node){
 }
 
 /**
- * Returns the successor of a certain node
- * @param node : node whose successor is desired
- * @return pointer to successor node, returns NULL if has no successor
+ * Returns the successor of a certain stationNode
+ * @param node : stationNode whose successor is desired
+ * @return pointer to successor stationNode, returns NULL if has no successor
  */
-node* searchSuccessor(node* node){
+stationNode* searchSuccessor(stationNode* node){
 
     //if has a right subtree => the minimum is the minimum valor of that subtree
     if(node->right->data != -1){
         return searchMinimum(node->right);
     }
 
-    //else the successor is the first parent node that has as left child the subtree in which node is inserted
-    struct node* father = node->parent;
+    //else the successor is the first parent stationNode that has as left child the subtree in which stationNode is inserted
+    struct stationNode* father = node->parent;
     while(father->data != -1 &&  father->right == node){
         node = father;
         father = father->parent;
@@ -683,19 +696,19 @@ node* searchSuccessor(node* node){
 }
 
 /**
- * Returns the predecessor of a certain node
- * @param node : node whose predecessor is desired
- * @return pointer to predecessor node, returns NULL if has no predecessor
+ * Returns the predecessor of a certain stationNode
+ * @param node : stationNode whose predecessor is desired
+ * @return pointer to predecessor stationNode, returns NULL if has no predecessor
  */
-node* searchPredecessor(node* node){
+stationNode* searchPredecessor(stationNode* node){
 
     //if has a right subtree => the maximum is the maximum valor of that subtree
     if(node->left->data != -1){
         return searchMaximum(node->left);
     }
 
-    //else the successor is the first parent node that has as right child the subtree in which node is inserted
-    struct node* father = node->parent;
+    //else the successor is the first parent stationNode that has as right child the subtree in which stationNode is inserted
+    struct stationNode* father = node->parent;
     while(father->data != -1 &&  father->left == node){
         node = father;
         father = father->parent;
@@ -710,10 +723,10 @@ node* searchPredecessor(node* node){
 /**
  * Search the minimum valor of a specified tree
  * @param root : root of the specified tree
- * @return pointer to the node with minimum integer of the tree
+ * @return pointer to the stationNode with minimum integer of the tree
  */
-node* searchMinimum(node* root){
-    struct node* current = root;
+stationNode* searchMinimum(stationNode* root){
+    struct stationNode* current = root;
 
     while(current->left->data != -1){
         current = current->left;
@@ -724,10 +737,10 @@ node* searchMinimum(node* root){
 /**
  * Search the maximum valor of a specified tree
  * @param root : root of the specified tree
- * @return pointer to the node with maximum integer of the tree
+ * @return pointer to the stationNode with maximum integer of the tree
  */
-node* searchMaximum(node* root){
-    struct node* current = root;
+stationNode* searchMaximum(stationNode* root){
+    struct stationNode* current = root;
 
     while(current->right->data != -1){
         current = current->right;
@@ -739,23 +752,25 @@ node* searchMaximum(node* root){
  * Free the memory reserved for the specified tree
  * @param root : root of the tree to free
  */
-void freeTree(node* root){
+void freeTree(stationNode* root){
     if(root == Nil)
         return;
     freeTree(root->left);
     freeTree(root->right);
+    freeLightTree(root->carsRoot);
+    free(root);
 }
 
 //Light R&B functions
 //---------------------------------------------
 /**
- * Creates a new red light-node, with parent, right and left child initialised to null.
- * @param data : integer saved into the light-node
- * @return pointer to the new light-node
+ * Creates a new red light-stationNode, with parent, right and left child initialised to null.
+ * @param data : integer saved into the light-stationNode
+ * @return pointer to the new light-stationNode
  */
-lightNode * createLightNode(int data){
+carNode * createLightNode(int data){
 
-    lightNode * newNode = (lightNode*)malloc(sizeof(struct lightNode));
+    carNode * newNode = (carNode*)malloc(sizeof(struct carNode));
     newNode->data = data;
     newNode->color = red;
     newNode->parent = NULL;
@@ -766,11 +781,11 @@ lightNode * createLightNode(int data){
 }
 
 /**
- * Creates a Nil light-node for a light-tree data structure, initialised with black color and all pointers to NULL.
+ * Creates a Nil light-stationNode for a light-tree data structure, initialised with black color and all pointers to NULL.
  */
-lightNode* createNilLightNode(){
+carNode* createNilLightNode(){
 
-    lightNode* newNode = (lightNode*)malloc(sizeof(struct lightNode));
+    carNode* newNode = (carNode*)malloc(sizeof(struct carNode));
     newNode->data = -1;
     newNode->color = black;
     newNode->parent = NULL;
@@ -781,13 +796,13 @@ lightNode* createNilLightNode(){
 }
 
 /**
- * Adds a new light-node to the specified tree.
+ * Adds a new light-stationNode to the specified tree.
  * @param root : root of the specified tree.
- * @param newNode : light-node to add to the data structure.
+ * @param newNode : light-stationNode to add to the data structure.
  * @return pointer to the new root in case rotations modify the old root
  */
-lightNode* lightRBInsert(lightNode* root, lightNode* newNode){
-    lightNode* newRoot;
+carNode* lightRBInsert(carNode* root, carNode* newNode){
+    carNode* newRoot;
 
     //if the tree is empty => create a new root
     if(root == lightNil){
@@ -800,10 +815,10 @@ lightNode* lightRBInsert(lightNode* root, lightNode* newNode){
         newRoot = root;
     }
 
-        //search te correct position for the new node
+        //search te correct position for the new stationNode
     else{
-        lightNode* currentNode = root;
-        lightNode* lastValid;
+        carNode* currentNode = root;
+        carNode* lastValid;
 
         while( currentNode->data != -1){
             lastValid = currentNode;
@@ -830,17 +845,17 @@ lightNode* lightRBInsert(lightNode* root, lightNode* newNode){
 }
 
 /**
- * Fix the red and black tree after insertion of a red light-node.
+ * Fix the red and black tree after insertion of a red light-stationNode.
  * @param root : root of the specified tree.
- * @param node : light-node just inserted to fix.
+ * @param node : light-stationNode just inserted to fix.
  * @return pointer to the new root in case rotations modify the old root
  */
-lightNode* lightRBInsertFixup(lightNode* root, lightNode* node){
-    lightNode* newRoot = root;
-    lightNode* father = node->parent;
-    lightNode* grandfather = father->parent;
+carNode* lightRBInsertFixup(carNode* root, carNode* node){
+    carNode* newRoot = root;
+    carNode* father = node->parent;
+    carNode* grandfather = father->parent;
 
-    //case 0 : node is the root
+    //case 0 : stationNode is the root
     if(root == node){
         node->color = black;
     }
@@ -852,7 +867,7 @@ lightNode* lightRBInsertFixup(lightNode* root, lightNode* node){
 
         //parent is grandfather's left child
     else if(father == grandfather->left){
-        lightNode* uncle = grandfather->right;
+        carNode* uncle = grandfather->right;
 
         //case 2 : uncle is red
         if(uncle->color == red){
@@ -862,13 +877,13 @@ lightNode* lightRBInsertFixup(lightNode* root, lightNode* node){
             newRoot = lightRBInsertFixup(root, grandfather);
         }
 
-            //case 3 : uncle is black, node is right child
+            //case 3 : uncle is black, stationNode is right child
         else if(uncle->color == black && node == father->right){
             newRoot = lightLeftRotate(root, father);
             newRoot = lightRBInsertFixup(newRoot, father);
         }
 
-            //case 4 : uncle is black, node is left child
+            //case 4 : uncle is black, stationNode is left child
         else{
             lightChangeColor(father);
             lightChangeColor(grandfather);
@@ -878,7 +893,7 @@ lightNode* lightRBInsertFixup(lightNode* root, lightNode* node){
 
         //parent is grandfather's right child
     else{
-        lightNode* uncle = grandfather->left;
+        carNode* uncle = grandfather->left;
 
         //case 2 : uncle is red
         if(uncle->color == red){
@@ -888,13 +903,13 @@ lightNode* lightRBInsertFixup(lightNode* root, lightNode* node){
             newRoot = lightRBInsertFixup(root, grandfather);
         }
 
-            //case 3 : uncle is black, node is left child
+            //case 3 : uncle is black, stationNode is left child
         else if(uncle->color == black && node == father->left){
             newRoot = lightRightRotate(root, father);
             newRoot = lightRBInsertFixup(newRoot, father);
         }
 
-            //case 4 : uncle is black, node is right child
+            //case 4 : uncle is black, stationNode is right child
         else{
             lightChangeColor(father);
             lightChangeColor(grandfather);
@@ -906,10 +921,10 @@ lightNode* lightRBInsertFixup(lightNode* root, lightNode* node){
 }
 
 /**
- * Changes the color of the specified light-node to the opposite color.
- * @param node : light-node to modify
+ * Changes the color of the specified light-stationNode to the opposite color.
+ * @param node : light-stationNode to modify
  */
-void lightChangeColor(lightNode* node){
+void lightChangeColor(carNode* node){
     if(node->color == red)
         node->color = black;
     else
@@ -917,17 +932,17 @@ void lightChangeColor(lightNode* node){
 }
 
 /**
- * Performs a right rotation to the specified light-node.
- * @param root : root of light-node's tree
- * @param node : light-node to right-rotate
+ * Performs a right rotation to the specified light-stationNode.
+ * @param root : root of light-stationNode's tree
+ * @param node : light-stationNode to right-rotate
  * @return the new root if the old root is rotated, else the old root
  */
-lightNode* lightRightRotate(lightNode* root, lightNode* node){
-    lightNode* y = node;
-    lightNode* x = node->left;
-    lightNode* b = x->right;
-    lightNode* d = node->parent;
-    lightNode* newRoot = root;
+carNode* lightRightRotate(carNode* root, carNode* node){
+    carNode* y = node;
+    carNode* x = node->left;
+    carNode* b = x->right;
+    carNode* d = node->parent;
+    carNode* newRoot = root;
 
     //fix pointers of the nodes
     if(b->data != -1)
@@ -943,7 +958,7 @@ lightNode* lightRightRotate(lightNode* root, lightNode* node){
             d->right = x;
     }
 
-    //if the rotated node was the old root, then a new root is settled
+    //if the rotated stationNode was the old root, then a new root is settled
     if(y == root)
         newRoot = x;
 
@@ -951,17 +966,17 @@ lightNode* lightRightRotate(lightNode* root, lightNode* node){
 }
 
 /**
- * Performs a left rotation to the specified light-node.
- * @param root : root of light-node's tree
- * @param node : light-node to left-rotate
+ * Performs a left rotation to the specified light-stationNode.
+ * @param root : root of light-stationNode's tree
+ * @param node : light-stationNode to left-rotate
  * @return the new root if the old root is rotated, else the old root
  */
-lightNode* lightLeftRotate(lightNode* root, lightNode* node){
-    lightNode* x = node;
-    lightNode* y = node->right;
-    lightNode* d = node->parent;
-    lightNode* b = y->left;
-    lightNode* newRoot = root;
+carNode* lightLeftRotate(carNode* root, carNode* node){
+    carNode* x = node;
+    carNode* y = node->right;
+    carNode* d = node->parent;
+    carNode* b = y->left;
+    carNode* newRoot = root;
 
     //fix pointers of the nodes
     if(b->data != -1)
@@ -978,7 +993,7 @@ lightNode* lightLeftRotate(lightNode* root, lightNode* node){
     }
 
 
-    //if the rotated node was the old root, then a new root is settled
+    //if the rotated stationNode was the old root, then a new root is settled
     if(x == root)
         newRoot = y;
 
@@ -989,7 +1004,7 @@ lightNode* lightLeftRotate(lightNode* root, lightNode* node){
  * In-order visit of the specified light-tree
  * @param root : root of the specified light-tree to visit
  */
-void lightInOrderVisit(lightNode* root){
+void lightInOrderVisit(carNode* root){
     if(root->data != -1) {
         lightInOrderVisit(root->left);
         printf("%d ", root->data);
@@ -1001,9 +1016,9 @@ void lightInOrderVisit(lightNode* root){
  * Perfmorms a search of an element in the specified light-tree
  * @param root : root of the specified light-tree
  * @param data : data to search in the light-tree
- * @return pointer to the light-node containing the data; if isn't found then returns null
+ * @return pointer to the light-stationNode containing the data; if isn't found then returns null
  */
-lightNode* lightSearchNode(lightNode* root, int data){
+carNode* lightSearchNode(carNode* root, int data){
 
     if (data == root->data)
         return root;
@@ -1021,21 +1036,21 @@ lightNode* lightSearchNode(lightNode* root, int data){
  * @param data : data to delete
  * @return pointer to the new root in case rotations modify the old root
  */
-lightNode* lightRBDelete(lightNode* root, int data){
-    lightNode* newRoot = root;
-    lightNode* wanted = lightSearchNode(root, data);
+carNode* lightRBDelete(carNode* root, int data){
+    carNode* newRoot = root;
+    carNode* wanted = lightSearchNode(root, data);
 
     if(wanted != NULL){
 
-        //find which node is actually going to be deleted
-        lightNode* toDelete;
+        //find which stationNode is actually going to be deleted
+        carNode* toDelete;
         if(wanted->left->data == -1 || wanted->right->data == -1)
             toDelete = wanted;
         else
             toDelete = lightSearchSuccessor(wanted);
 
-        //find the subtree of the node to delete and adjust the pointers
-        lightNode* subtree;
+        //find the subtree of the stationNode to delete and adjust the pointers
+        carNode* subtree;
         if(toDelete->left->data != -1)
             subtree = toDelete->left;
         else
@@ -1059,7 +1074,7 @@ lightNode* lightRBDelete(lightNode* root, int data){
         if(toDelete != wanted)
             wanted->data = toDelete->data;
 
-        //if the deleted node is black then must be invoked the fixup function on the node that replaced the deleted one
+        //if the deleted stationNode is black then must be invoked the fixup function on the stationNode that replaced the deleted one
         if(toDelete->color == black)
             newRoot = lightRBDeleteFixup(newRoot, subtree);
 
@@ -1074,30 +1089,30 @@ lightNode* lightRBDelete(lightNode* root, int data){
 }
 
 /**
- * Fix red and black light-tree after deletion of a black light-node
+ * Fix red and black light-tree after deletion of a black light-stationNode
  * @param root : root of the specified light-tree
- * @param node : light-node that replaced the one that has been deleted
+ * @param node : light-stationNode that replaced the one that has been deleted
  * @return : pointer to the new root in case rotations modify the old root
  */
-lightNode* lightRBDeleteFixup(lightNode* root, lightNode* node){
-    lightNode* father = node->parent;
-    lightNode* newRoot = root;
+carNode* lightRBDeleteFixup(carNode* root, carNode* node){
+    carNode* father = node->parent;
+    carNode* newRoot = root;
 
-    //if node reached the root of the tree => recolor it black
+    //if stationNode reached the root of the tree => recolor it black
     if(node == root)
         node->color = black;
 
     else{
-        //case if node is the left child
+        //case if stationNode is the left child
         if(node == father->left){
-            lightNode* brother = father->right;
+            carNode* brother = father->right;
 
-            //case 0 : node is red
+            //case 0 : stationNode is red
             if(node->color == red) {
                 node->color = black;
             }
 
-                //case 1 : node is black, brother is red
+                //case 1 : stationNode is black, brother is red
             else if(node->color == black && brother->color == red){
                 lightChangeColor(brother);
                 lightChangeColor(father);
@@ -1105,13 +1120,13 @@ lightNode* lightRBDeleteFixup(lightNode* root, lightNode* node){
                 newRoot = lightRBDeleteFixup(newRoot, node);
             }
 
-                //case 2 : node is black, brother is black, nephews are black
+                //case 2 : stationNode is black, brother is black, nephews are black
             else if(node->color == black && brother->color == black && brother->left->color == black && brother->right->color == black){
                 lightChangeColor(brother);
                 newRoot = lightRBDeleteFixup(root, father);
             }
 
-                //case 3 : node is black, brother is black, right-nephew is black &&  left-nephew is red
+                //case 3 : stationNode is black, brother is black, right-nephew is black &&  left-nephew is red
             else if(node->color == black && brother->color == black && brother->right->color == black &&  brother->left->color == red){
                 lightChangeColor(brother);
                 lightChangeColor(brother->left);
@@ -1119,7 +1134,7 @@ lightNode* lightRBDeleteFixup(lightNode* root, lightNode* node){
                 newRoot = lightRBDeleteFixup(newRoot, node);
             }
 
-                //case 4 : node is black, brother is black, right-nephew is red
+                //case 4 : stationNode is black, brother is black, right-nephew is red
             else{
                 brother->color = father->color;
                 father->color = black;
@@ -1127,16 +1142,16 @@ lightNode* lightRBDeleteFixup(lightNode* root, lightNode* node){
                 newRoot = lightLeftRotate(root, father);
             }
         }
-            //case if node is the right child
+            //case if stationNode is the right child
         else{
-            lightNode* brother = father->left;
+            carNode* brother = father->left;
 
-            //case 0 : node is red
+            //case 0 : stationNode is red
             if(node->color == red) {
                 node->color = black;
             }
 
-                //case 1 : node is black, brother is red
+                //case 1 : stationNode is black, brother is red
             else if(node->color == black && brother->color == red){
                 lightChangeColor(brother);
                 lightChangeColor(father);
@@ -1144,13 +1159,13 @@ lightNode* lightRBDeleteFixup(lightNode* root, lightNode* node){
                 newRoot = lightRBDeleteFixup(newRoot, node);
             }
 
-                //case 2 : node is black, brother is black, nephews are black
+                //case 2 : stationNode is black, brother is black, nephews are black
             else if(node->color == black && brother->color == black && brother->left->color == black && brother->right->color == black){
                 lightChangeColor(brother);
                 newRoot = lightRBDeleteFixup(root, father);
             }
 
-                //case 3 : node is black, brother is black, left-nephew is black &&  right-nephew is red
+                //case 3 : stationNode is black, brother is black, left-nephew is black &&  right-nephew is red
             else if(node->color == black && brother->color == black && brother->left->color == black &&  brother->right->color == red){
                 lightChangeColor(brother);
                 lightChangeColor(brother->right);
@@ -1158,7 +1173,7 @@ lightNode* lightRBDeleteFixup(lightNode* root, lightNode* node){
                 newRoot = lightRBDeleteFixup(newRoot, node);
             }
 
-                //case 4 : node is black, brother is black, left-nephew is red
+                //case 4 : stationNode is black, brother is black, left-nephew is red
             else{
                 brother->color = father->color;
                 father->color = black;
@@ -1174,19 +1189,19 @@ lightNode* lightRBDeleteFixup(lightNode* root, lightNode* node){
 }
 
 /**
- * Returns the successor of a certain light-node
- * @param node : light-node whose successor is desired
- * @return pointer to successor light-node, returns NULL if has no successor
+ * Returns the successor of a certain light-stationNode
+ * @param node : light-stationNode whose successor is desired
+ * @return pointer to successor light-stationNode, returns NULL if has no successor
  */
-lightNode* lightSearchSuccessor(lightNode* node){
+carNode* lightSearchSuccessor(carNode* node){
 
     //if has a right subtree => the minimum is the minimum valor of that subtree
     if(node->right->data != -1){
         return lightSearchMinimum(node->right);
     }
 
-    //else the successor is the first parent node that has as left child the subtree in which node is inserted
-    lightNode* father = node->parent;
+    //else the successor is the first parent stationNode that has as left child the subtree in which stationNode is inserted
+    carNode* father = node->parent;
     while(father->data != -1 &&  father->right == node){
         node = father;
         father = father->parent;
@@ -1199,19 +1214,19 @@ lightNode* lightSearchSuccessor(lightNode* node){
 }
 
 /**
- * Returns the predecessor of a certain light-node
- * @param node : light-node whose predecessor is desired
- * @return pointer to predecessor light-node, returns NULL if has no predecessor
+ * Returns the predecessor of a certain light-stationNode
+ * @param node : light-stationNode whose predecessor is desired
+ * @return pointer to predecessor light-stationNode, returns NULL if has no predecessor
  */
-lightNode* lightSearchPredecessor(lightNode* node){
+carNode* lightSearchPredecessor(carNode* node){
 
     //if has a right subtree => the maximum is the maximum valor of that subtree
     if(node->left->data != -1){
         return lightSearchMaximum(node->left);
     }
 
-    //else the successor is the first parent node that has as right child the subtree in which node is inserted
-    lightNode* father = node->parent;
+    //else the successor is the first parent stationNode that has as right child the subtree in which stationNode is inserted
+    carNode* father = node->parent;
     while(father->data != -1 &&  father->left == node){
         node = father;
         father = father->parent;
@@ -1226,10 +1241,10 @@ lightNode* lightSearchPredecessor(lightNode* node){
 /**
  * Search the minimum valor of a specified light-tree
  * @param root : root of the specified light-tree
- * @return pointer to the light-node with minimum integer of the light-tree
+ * @return pointer to the light-stationNode with minimum integer of the light-tree
  */
-lightNode* lightSearchMinimum(lightNode* root){
-    lightNode* current = root;
+carNode* lightSearchMinimum(carNode* root){
+    carNode* current = root;
 
     while(current->left->data != -1){
         current = current->left;
@@ -1240,10 +1255,10 @@ lightNode* lightSearchMinimum(lightNode* root){
 /**
  * Search the maximum valor of a specified light-tree
  * @param root : root of the specified light-tree
- * @return pointer to the light-node with maximum integer of the light-tree
+ * @return pointer to the light-stationNode with maximum integer of the light-tree
  */
-lightNode* lightSearchMaximum(lightNode* root){
-    lightNode* current = root;
+carNode* lightSearchMaximum(carNode* root){
+    carNode* current = root;
 
     while(current->right->data != -1){
         current = current->right;
@@ -1255,7 +1270,7 @@ lightNode* lightSearchMaximum(lightNode* root){
  * Free the memory reserved for the specified light-tree
  * @param root : root of the light-tree to free
  */
-void freeLightTree(lightNode* root){
+void freeLightTree(carNode* root){
     if(root == lightNil)
         return;
     freeLightTree(root->left);
@@ -1263,109 +1278,468 @@ void freeLightTree(lightNode* root){
     free(root);
 }
 
-
-//Graph functions
+//Neighbors-tree functions
 //---------------------------------------------
 
 /**
- * Add a node to the graph, making a in-order visit to the stations-tree
- * @param stationsRoot : tree containing all the stations
- * @param node : pointer to the node to add into the graph
+ * Creates a new red neighborNode, with parent, right and left child initialised to null.
+ * @param data : integer saved into the neighborNode
+ * @param generator : node that generated the new edge
+ * @return pointer to the new neighborNode
  */
-void addToGraph(node* stationsRoot, node* node){
-    if(stationsRoot != Nil) {
-        addToGraph(stationsRoot->left, node);
+neighborNode* createNeighborNode(int data, neighborNode* generator){
 
-        if(stationsRoot->data != node->data){
+    neighborNode * newNode = (neighborNode*)malloc(sizeof(struct neighborNode));
+    newNode->data = data;
+    newNode->color = red;
+    newNode->generator = generator;
+    newNode->parent = NULL;
+    newNode->right = NULL;
+    newNode->left = NULL;
 
-            //if i can reach him => add him to my neighbors
-            int minReach = node->data - node->biggestCar;
-            if(minReach<0)
-                minReach=0;
-            int maxReach = node->data + node->biggestCar;
+    return newNode;
+}
 
-            if(stationsRoot->data >= minReach && stationsRoot->data <= maxReach){
-                node->neighborsRoot = lightRBInsert(node->neighborsRoot, createLightNode(stationsRoot->data));
-            }
+/**
+ * Creates a Nil neighbor node for a neighbors-tree, initialised with black color and all pointers to NULL.
+ */
+neighborNode* createNilNeighborNode(){
 
-            //if he can reach me => add me to his neighbors
-            minReach = stationsRoot->data - stationsRoot->biggestCar;
-            if(minReach < 0)
-                minReach = 0;
-            maxReach = stationsRoot->data + stationsRoot->biggestCar;
+    neighborNode* newNode = (neighborNode*)malloc(sizeof(struct neighborNode));
+    newNode->data = -1;
+    newNode->color = black;
+    newNode->generator = NULL;
+    newNode->parent = NULL;
+    newNode->right = NULL;
+    newNode->left = NULL;
 
-            if(node->data >= minReach && node->data <= maxReach){
-                stationsRoot->neighborsRoot = lightRBInsert(stationsRoot->neighborsRoot, createLightNode(node->data));
+    return newNode;
+}
+
+/**
+ * Adds a new neighborNode to the specified tree.
+ * @param root : root of the specified tree.
+ * @param newNode : neighborNode to add to the data structure.
+ * @return pointer to the new inserted node
+ */
+neighborNode* neighborRBInsert(neighborNode** root, neighborNode* generator, int data){
+    neighborNode *newNode = NULL;
+
+    //if the tree is empty => create a new root
+    if((*root) == neighborNil){
+        newNode = createNeighborNode(data, generator);
+        newNode->parent = neighborNil;
+        newNode->left = neighborNil;
+        newNode->right = neighborNil;
+        newNode->color = black;
+
+        *root = newNode;
+    }
+
+        //search te correct position for the new stationNode
+    else{
+        neighborNode* currentNode = *root;
+        neighborNode* lastValid;
+
+        while( currentNode->data != -1){
+            lastValid = currentNode;
+            if(data < lastValid->data){
+                currentNode = currentNode->left;
+            }else{
+                currentNode = currentNode->right;
             }
         }
+        newNode = createNeighborNode(data, generator);
+        newNode->parent = lastValid;
+        newNode->right = neighborNil;
+        newNode->left = neighborNil;
 
-        addToGraph(stationsRoot->right, node);
-    }
-}
-
-/**
- * Delete the edges pointed to "data" station from other nodes of the graph
- * @param root : root of the stations-tree
- * @param data : removed station whose edges need to be deleted
- */
-void deleteEdges(node* root, int data){
-    if(root != Nil){
-        deleteEdges(root->left, data);
-
-        if(root->data != data){
-            //if i-th node can reach me => perform a deletion of the edge
-            int minReach = root->data - root->biggestCar;
-            if(minReach < 0)
-                minReach = 0;
-            int maxReach = root->data + root->biggestCar;
-
-            if(data >= minReach && data <= maxReach)
-                root->neighborsRoot = lightRBDelete(root->neighborsRoot, data);
+        if(newNode->data < lastValid->data){
+            lastValid->left = newNode;
+        }else{
+            lastValid->right = newNode;
         }
 
-        deleteEdges(root->right, data);
+        neighborRBInsertFixup(root, newNode);
+    }
+    return newNode;
+}
+
+/**
+ * Fix the red and black tree after insertion of a red neighborNode.
+ * @param root : root of the specified tree.
+ * @param node : neighborNode just inserted to fix.
+ */
+void neighborRBInsertFixup(neighborNode** root, neighborNode* node){
+    neighborNode* father = node->parent;
+    neighborNode* grandfather = father->parent;
+
+    //case 0 : stationNode is the root
+    if(*root == node){
+        node->color = black;
+    }
+
+        //case 1 : father is black
+    else if(father->color == black){
+        return;
+    }
+
+        //parent is grandfather's left child
+    else if(father == grandfather->left){
+        neighborNode* uncle = grandfather->right;
+
+        //case 2 : uncle is red
+        if(uncle->color == red){
+            neighborChangeColor(father);
+            neighborChangeColor(grandfather);
+            neighborChangeColor(uncle);
+            neighborRBInsertFixup(root, grandfather);
+        }
+
+            //case 3 : uncle is black, stationNode is right child
+        else if(uncle->color == black && node == father->right){
+            neighborLeftRotate(root, father);
+            neighborRBInsertFixup(root, father);
+        }
+
+            //case 4 : uncle is black, stationNode is left child
+        else{
+            neighborChangeColor(father);
+            neighborChangeColor(grandfather);
+            neighborRightRotate(root, grandfather);
+        }
+    }
+
+        //parent is grandfather's right child
+    else{
+        neighborNode* uncle = grandfather->left;
+
+        //case 2 : uncle is red
+        if(uncle->color == red){
+            neighborChangeColor(father);
+            neighborChangeColor(grandfather);
+            neighborChangeColor(uncle);
+            neighborRBInsertFixup(root, grandfather);
+        }
+
+            //case 3 : uncle is black, stationNode is left child
+        else if(uncle->color == black && node == father->left){
+            neighborRightRotate(root, father);
+            neighborRBInsertFixup(root, father);
+        }
+
+            //case 4 : uncle is black, stationNode is right child
+        else{
+            neighborChangeColor(father);
+            neighborChangeColor(grandfather);
+            neighborLeftRotate(root, grandfather);
+        }
     }
 }
 
 /**
- * Add new edges when a new biggestCar for the specified node is inserted in cars-tree
- * @param root : root of the stations-tree
- * @param node : node with a new biggest car
- * @param min : minimum reachable distance by node
- * @param max : maximum reachable distance by node
+ * Changes the color of the specified neighborNode to the opposite color.
+ * @param node : neighborNode to modify
  */
-void addNewEdges(node* root, node* node, int min, int max){
-    if(root != Nil){
+void neighborChangeColor(neighborNode* node){
+    if(node->color == red)
+        node->color = black;
+    else
+        node->color = red;
+}
 
-        if(root->data > min)
-            addNewEdges(root->left, node, min, max);
+/**
+ * Performs a right rotation to the specified neighborNode.
+ * @param root : root of neighborNode's tree
+ * @param node : neighborNode to right-rotate
+ */
+void neighborRightRotate(neighborNode** root, neighborNode* node){
+    neighborNode* y = node;
+    neighborNode* x = node->left;
+    neighborNode* b = x->right;
+    neighborNode* d = node->parent;
 
-        if(root != node && root->data >= min && root->data <= max)
-            node->neighborsRoot = lightRBInsert(node->neighborsRoot, createLightNode(root->data));
+    //fix pointers of the nodes
+    if(b->data != -1)
+        b->parent = y;
+    y->left = b;
+    x->right = y;
+    y->parent = x;
+    x->parent = d;
+    if(d->data != -1){
+        if(y == d->left)
+            d->left = x;
+        else
+            d->right = x;
+    }
 
-        if(root->data < max)
-            addNewEdges(root->left, node, min, max);
+    //if the rotated stationNode was the old root, then a new root is settled
+    if(y == *root)
+        *root = x;
+}
+
+/**
+ * Performs a left rotation to the specified neighborNode.
+ * @param root : root of neighborNode's tree
+ * @param node : neighborNode to left-rotate
+ */
+void neighborLeftRotate(neighborNode** root, neighborNode* node){
+    neighborNode* x = node;
+    neighborNode* y = node->right;
+    neighborNode* d = node->parent;
+    neighborNode* b = y->left;
+
+    //fix pointers of the nodes
+    if(b->data != -1)
+        b->parent = x;
+    x->right = b;
+    x->parent = y;
+    y->left = x;
+    y->parent = d;
+    if(d->data != -1){
+        if(x == d->left)
+            d->left = y;
+        else
+            d->right = y;
+    }
+
+
+    //if the rotated stationNode was the old root, then a new root is settled
+    if(x == *root)
+        *root = y;
+}
+
+/**
+ * Perfmorms a search of an element in the specified neighbor-tree
+ * @param root : root of the specified tree
+ * @param data : data to search in the tree
+ * @return pointer to the neighbor node containing the data; if isn't found then returns null
+ */
+neighborNode* searchNeighborNode(neighborNode* root, int data){
+    if (data == root->data)
+        return root;
+    else if( root->data == -1)
+        return NULL;
+    else if (data < root->data)
+        return searchNeighborNode(root->left, data);
+    else
+        return searchNeighborNode(root->right, data);
+}
+
+void freeNeighborTree(neighborNode* root){
+    if(root == neighborNil)
+        return;
+    freeNeighborTree(root->left);
+    freeNeighborTree(root->right);
+    free(root);
+}
+
+//queue functions
+//---------------------------------------------
+
+/**
+ * Creates a new node for the border-queue, with next pointer initialised to null
+ * @param data : integer to insert into the node
+ * @return pointer to the new node
+ */
+borderNode* createBorderNode(int data){
+
+    borderNode* newNode = (borderNode*)malloc(sizeof (struct borderNode));
+    newNode->data = data;
+    newNode->next = NULL;
+
+    return newNode;
+}
+
+/**
+ * Enqueue a borderNode in borders-queue
+ * @param head : double pointer to the head of the queue
+ * @param tail : double pointer to the tail of the queue
+ * @param node : pointer to the new node to enqueue
+ */
+void enqueue(borderNode** head, borderNode** tail, borderNode* node){
+    if(*head == NULL){
+        *head = node;
+        *tail = node;
+    }else{
+        (*tail)->next = node;
+        *tail = node;
+    }
+}
+/**
+ * Dequeue a borderNode in borders-queue, whiel also freeing memory from the queue
+ * @param head : head of the queue
+ * @param tail : tail of the queue
+ * @return integer contained in the old head of the queue; if is empty returns -1
+ */
+int dequeue(borderNode** head, borderNode** tail){
+    borderNode* platypus = NULL;
+    int result = -1;
+
+    if(*head != NULL){
+        platypus = *head;
+        *head = (*head)->next;
+        result = platypus->data;
+        free(platypus);
+    }
+
+    return result;
+}
+
+//Stack functions
+//---------------------------------------------
+
+/**
+ * Adds a new element on top of the stack with LIFO logic
+ * @param head : head of the stack
+ * @param data : data to insert
+ */
+void addToStack(borderNode** head, int data){
+    borderNode* newNode = createBorderNode(data);
+
+    if(*head == NULL){
+        *head = newNode;
+    }else{
+        newNode->next = *head;
+        *head = newNode;
     }
 }
 
 /**
- * Remove old edges from a node when they are no more reachable when the biggestCar for the specified node is removed in cars-tree
- * @param root : root of the stations-tree
- * @param node : node with a new biggest car
- * @param min : minimum reachable distance by node
- * @param max : maximum reachable distance by node
+ * Reads the saved route while also freeing the memory from the stack
+ * @param head : head of the stack
  */
-void removeOldEdges(node* root, node* node, int min, int max){
-    if(root != Nil){
-        if(root->data > min)
-            removeOldEdges(root->left, node, min, max);
+void readRoute(borderNode** head){
+    borderNode* temp = NULL;
 
-        if(root != node && root->data >= min && root->data <= max)
-            node->neighborsRoot = lightRBDelete(node->neighborsRoot, root->data);
-
-        if(root->data < max)
-            removeOldEdges(root->left, node, min, max);
+    while(*head != NULL) {
+        printf("%d ", (*head)->data);
+        temp = *head;
+        *head = (*head)->next;
+        free(temp);
     }
+    printf("\n");
+}
+
+
+
+//Route functions
+//---------------------------------------------
+
+/* 1) inserisci start nella pila della frontiera e nell'albero dei visitati
+ * 2) dequeue dalla frontiera il nodo e trova i vicini del nodo tenendo conto di goal e senza tornare indietro, poi inseriscili nei visitati con il puntatore al nodo generatore usando la visita in order
+ * 3) itera fintanto che non trovi goal nei visitati o finisce frontiera
+ * 4) se hai trovato goal stampa la strada dei generatori al contrario
+ * 5) libera la memoria da tutto lo schifo usato
+ */
+
+/**
+ * Calculate the best route from start to end stations
+ * @param start : starting station
+ * @param end : ending station
+ */
+void routePlanner(stationNode* stationsRoot, int start, int end){
+    int currentBorder = -1, found = 0, min = 0, max = 0;
+    borderNode* head = NULL;
+    borderNode* tail = NULL;
+    borderNode* stackHead = NULL;
+    neighborNode* candidatesNodesRoot = neighborNil;
+    neighborNode* generator = NULL;
+    neighborNode* lastStation = NULL;
+    stationNode* vertix = NULL;
+
+    generator = neighborRBInsert(&candidatesNodesRoot, NULL, start);
+    currentBorder = start;
+
+    if(start == 19164)
+        printf("here\n");
+
+    if(start == end)
+        printf("%d\n", start);
+
+    else{
+        //itera per ogni nodo presente nella coda della frontiera, cioè per ogni vertice vai a calcolare i suoi archi
+        while(currentBorder != -1 && lastStation == NULL){
+            vertix = searchNode(stationsRoot, currentBorder);
+
+            //calcola min e max cercando la stazione e prendendo la sua auto più grande
+            if( start < end){
+                min = currentBorder;
+                max = currentBorder + vertix->biggestCar;
+                if(max > end)
+                    max = end;
+            }else{
+                min = currentBorder - vertix->biggestCar;
+                if(min < end)
+                    min = end;
+                max = currentBorder;
+            }
+
+            //calcola i candidati per il percorso minimo
+            lastStation = searchRoute(stationsRoot, &candidatesNodesRoot, generator, &head, &tail, min, max, end, currentBorder);
+            currentBorder = dequeue(&head, &tail);
+            generator = searchNeighborNode(candidatesNodesRoot, currentBorder);
+        }
+
+        //se hai trovato il percorso minimo => stampalo
+        if(lastStation != NULL){
+            while(lastStation != NULL){
+                addToStack(&stackHead, lastStation->data);
+                lastStation = lastStation->generator;
+            }
+            readRoute(&stackHead);
+        }else{
+            printf("nessun percorso\n");
+        }
+
+        //libera la memoria dallo stack, coda e albero dei vicini
+        freeNeighborTree(candidatesNodesRoot);
+        while(currentBorder != -1)
+            currentBorder = dequeue(&head, &tail);
+    }
+}
+
+/**
+ * Search the candidates nodes for the best route
+ * @param stationsRoot : root of the stations tree
+ * @param candidatesNodesRoot : root of the candidates tree
+ * @param generator : previous node in the route
+ * @param head : head of the border queue
+ * @param tail : tail of the border queue
+ * @param min : minimum distance used to search candidates
+ * @param max : maximum distance used to search candidates
+ * @param end : arrival station
+ * @param currentBorder : current border whose candidates are searched
+ * @return : pointer to the arrival station if is found in the cadidates; if isn't found and all possible candidates of currentBorder have been analised, returns null
+ */
+neighborNode* searchRoute(stationNode* stationsRoot, neighborNode** candidatesNodesRoot, neighborNode* generator, borderNode** head, borderNode** tail, int min, int max, int end, int currentBorder){
+    neighborNode *result = NULL;
+
+    if(stationsRoot == Nil)
+        return NULL;
+
+    if(stationsRoot->data > min){
+        result = searchRoute(stationsRoot->left, candidatesNodesRoot, generator, head, tail, min, max, end,currentBorder);
+        if(result != NULL && result->data == end)
+            return result;
+    }
+
+    if(stationsRoot->data >= min && stationsRoot->data <= max && searchNeighborNode( *candidatesNodesRoot, stationsRoot->data)==NULL){
+        result = neighborRBInsert(candidatesNodesRoot, generator, stationsRoot->data);
+        if(result->data == end)
+            return result;
+        enqueue(head, tail, createBorderNode(stationsRoot->data));
+    }
+
+    if(stationsRoot->data < max){
+        result = searchRoute(stationsRoot->right, candidatesNodesRoot, generator, head, tail, min, max, end,currentBorder);
+    }
+
+    //ritorna solo se effettivamente hai trovato end
+    if(result != NULL && result->data == end)
+        return result;
+    else
+        return NULL;
 }
 
 //Imported functions
@@ -1373,7 +1747,7 @@ void removeOldEdges(node* root, node* node, int min, int max){
 
 // Function to print binary tree in 2D
 // It does reverse inorder traversal
-void print2DUtil(node* root, int space)
+void print2DUtil(stationNode* root, int space)
 {
     // Base case
     if (root->data == -1)
@@ -1385,7 +1759,7 @@ void print2DUtil(node* root, int space)
     // Process right child first
     print2DUtil(root->right, space);
 
-    // Print current node after space
+    // Print current stationNode after space
     // count
     printf("\n");
     for (int i = COUNT; i < space; i++)
@@ -1397,7 +1771,7 @@ void print2DUtil(node* root, int space)
 }
 
 // Wrapper over print2DUtil()
-void print2D(node* root)
+void print2D(stationNode* root)
 {
     // Pass initial space count as 0
     print2DUtil(root, 0);
@@ -1405,7 +1779,7 @@ void print2D(node* root)
 
 // Function to print binary tree in 2D
 // It does reverse inorder traversal
-void lightPrint2DUtil(lightNode* root, int space)
+void lightPrint2DUtil(carNode* root, int space)
 {
     // Base case
     if (root->data == -1)
@@ -1417,7 +1791,7 @@ void lightPrint2DUtil(lightNode* root, int space)
     // Process right child first
     lightPrint2DUtil(root->right, space);
 
-    // Print current node after space
+    // Print current stationNode after space
     // count
     printf("\n");
     for (int i = COUNT; i < space; i++)
@@ -1429,13 +1803,13 @@ void lightPrint2DUtil(lightNode* root, int space)
 }
 
 // Wrapper over print2DUtil()
-void lightPrint2D(lightNode* root)
+void lightPrint2D(carNode* root)
 {
     // Pass initial space count as 0
     lightPrint2DUtil(root, 0);
 }
 
-void treeprint(node *root, int level)
+void treeprint(stationNode *root, int level)
 {
     if (root == Nil)
         return;
@@ -1445,7 +1819,6 @@ void treeprint(node *root, int level)
     treeprint(root->left, level + 1);
     treeprint(root->right, level + 1);
 }
-
 
 int fastAtoi(char * str){
     int val = 0;
