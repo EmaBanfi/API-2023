@@ -94,16 +94,9 @@ borderNode* createBorderNode(int data);
 void enqueue(borderNode** head, borderNode** tail, borderNode* node);
 int dequeue(borderNode** head, borderNode** tail);
 
-//imported functions
-void print2D(stationNode* root);
-void print2DUtil(stationNode* root, int space);
-void lightPrint2D(carNode* root);
-void lightPrint2DUtil(carNode* root, int space);
-int fastAtoi(char* str);
-void treeprint(stationNode *root, int level);
-
 //Route functions
-neighborNode* searchRoute(stationNode* stationsRoot, neighborNode** candidatesNodesRoot, neighborNode* generator, borderNode** head, borderNode** tail, int min, int max, int end, int currentBorder);
+neighborNode* RightToLeftRoute(stationNode* stationsRoot, neighborNode** candidatesNodesRoot, neighborNode* generator, borderNode** head, borderNode** tail, int min, int max, int end, int currentBorder);
+neighborNode* LeftToRightRoute(stationNode* stationsRoot, neighborNode** candidatesNodesRoot, neighborNode* generator, borderNode** head, borderNode** tail, int min, int max, int end, int currentBorder);
 void routePlanner(stationNode* stationsRoot, int start, int end);
 
 //Global variables
@@ -112,12 +105,11 @@ carNode* lightNil;
 neighborNode* neighborNil;
 
 int main(){
-    int perry = 0, distance = 0, numOfCars = 0, autonomy = 0, start = 0, end = 0, min = 0, max = 0, temp = 0;
+    int distance = 0, numOfCars = 0, autonomy = 0, start = 0, end = 0, max = 0, temp = 0;
     Nil = createNilNode();
     lightNil = createNilLightNode();
     neighborNil = createNilNeighborNode();
     stationNode* stationsRoot = Nil;
-    stationNode* test;
     stationNode* newNode = NULL;
     carNode* newCar = NULL;
     char line[DIM] = {};
@@ -300,7 +292,7 @@ stationNode* RBInsert(stationNode** root, int data){
         //search te correct position for the new stationNode
     else{
         stationNode* currentNode = *root;
-        stationNode* lastValid;
+        stationNode* lastValid = NULL;
 
         while(currentNode->data != -1 && currentNode->data != data){
             lastValid = currentNode;
@@ -512,7 +504,6 @@ stationNode* searchNode(stationNode* root, int data){
 int RBDelete(stationNode** root, int data){
     struct stationNode* wanted = searchNode(*root, data);
     carNode* carsToDelete = NULL;
-    carNode* neighborsToDelete = NULL;
 
     if(wanted != NULL){
 
@@ -818,7 +809,7 @@ carNode* lightRBInsert(carNode* root, carNode* newNode){
         //search te correct position for the new stationNode
     else{
         carNode* currentNode = root;
-        carNode* lastValid;
+        carNode* lastValid = NULL;
 
         while( currentNode->data != -1){
             lastValid = currentNode;
@@ -1339,7 +1330,7 @@ neighborNode* neighborRBInsert(neighborNode** root, neighborNode* generator, int
         //search te correct position for the new stationNode
     else{
         neighborNode* currentNode = *root;
-        neighborNode* lastValid;
+        neighborNode* lastValid = NULL;
 
         while( currentNode->data != -1){
             lastValid = currentNode;
@@ -1613,10 +1604,12 @@ void readRoute(borderNode** head){
     borderNode* temp = NULL;
 
     while(*head != NULL) {
-        printf("%d ", (*head)->data);
+        printf("%d", (*head)->data);
         temp = *head;
         *head = (*head)->next;
         free(temp);
+        if(*head != NULL)
+            printf(" ");
     }
     printf("\n");
 }
@@ -1639,7 +1632,7 @@ void readRoute(borderNode** head){
  * @param end : ending station
  */
 void routePlanner(stationNode* stationsRoot, int start, int end){
-    int currentBorder = -1, found = 0, min = 0, max = 0;
+    int currentBorder = -1, min = 0, max = 0;
     borderNode* head = NULL;
     borderNode* tail = NULL;
     borderNode* stackHead = NULL;
@@ -1648,11 +1641,16 @@ void routePlanner(stationNode* stationsRoot, int start, int end){
     neighborNode* lastStation = NULL;
     stationNode* vertix = NULL;
 
-    generator = neighborRBInsert(&candidatesNodesRoot, NULL, start);
-    currentBorder = start;
-
-    if(start == 19164)
-        printf("here\n");
+    //se vai da sx a dx => calcola il percorso andando a cercare a partire dall'inizio i vicini raggiungibili per ogni nodo tramite una visita in order delle stazioni
+    if(start < end){
+        generator = neighborRBInsert(&candidatesNodesRoot, NULL, start);
+        currentBorder = start;
+    }
+        //se vai da dx a sx => calcola il percorso partendo dalla fine ed andando a cercare i nodi da cui è raggiunto tramite una visita in order delle stazioni
+    else{
+        generator = neighborRBInsert(&candidatesNodesRoot, NULL, end);
+        currentBorder = end;
+    }
 
     if(start == end)
         printf("%d\n", start);
@@ -1668,27 +1666,38 @@ void routePlanner(stationNode* stationsRoot, int start, int end){
                 max = currentBorder + vertix->biggestCar;
                 if(max > end)
                     max = end;
+
+                //calcola i candidati per il percorso minimo
+                lastStation = RightToLeftRoute(stationsRoot, &candidatesNodesRoot, generator, &head, &tail, min, max, end, currentBorder);
             }else{
-                min = currentBorder - vertix->biggestCar;
-                if(min < end)
-                    min = end;
-                max = currentBorder;
+                min = currentBorder;
+                max = start;
+
+                lastStation = LeftToRightRoute(stationsRoot, &candidatesNodesRoot, generator, &head, &tail, min, max, start, currentBorder);
             }
 
-            //calcola i candidati per il percorso minimo
-            lastStation = searchRoute(stationsRoot, &candidatesNodesRoot, generator, &head, &tail, min, max, end, currentBorder);
             currentBorder = dequeue(&head, &tail);
             generator = searchNeighborNode(candidatesNodesRoot, currentBorder);
         }
 
         //se hai trovato il percorso minimo => stampalo
-        if(lastStation != NULL){
+        if(lastStation != NULL && start < end){
             while(lastStation != NULL){
                 addToStack(&stackHead, lastStation->data);
                 lastStation = lastStation->generator;
             }
             readRoute(&stackHead);
-        }else{
+        }
+        else if(lastStation != NULL && start > end){
+            while(lastStation != NULL){
+                printf("%d", lastStation->data);
+                lastStation = lastStation->generator;
+                if(lastStation!=NULL)
+                    printf(" ");
+            }
+            printf("\n");
+        }
+        else{
             printf("nessun percorso\n");
         }
 
@@ -1712,14 +1721,15 @@ void routePlanner(stationNode* stationsRoot, int start, int end){
  * @param currentBorder : current border whose candidates are searched
  * @return : pointer to the arrival station if is found in the cadidates; if isn't found and all possible candidates of currentBorder have been analised, returns null
  */
-neighborNode* searchRoute(stationNode* stationsRoot, neighborNode** candidatesNodesRoot, neighborNode* generator, borderNode** head, borderNode** tail, int min, int max, int end, int currentBorder){
+neighborNode* RightToLeftRoute(stationNode* stationsRoot, neighborNode** candidatesNodesRoot, neighborNode* generator, borderNode** head, borderNode** tail, int min, int max, int end, int currentBorder){
     neighborNode *result = NULL;
 
     if(stationsRoot == Nil)
         return NULL;
 
     if(stationsRoot->data > min){
-        result = searchRoute(stationsRoot->left, candidatesNodesRoot, generator, head, tail, min, max, end,currentBorder);
+        result = RightToLeftRoute(stationsRoot->left, candidatesNodesRoot, generator, head, tail, min, max, end,
+                                  currentBorder);
         if(result != NULL && result->data == end)
             return result;
     }
@@ -1732,7 +1742,8 @@ neighborNode* searchRoute(stationNode* stationsRoot, neighborNode** candidatesNo
     }
 
     if(stationsRoot->data < max){
-        result = searchRoute(stationsRoot->right, candidatesNodesRoot, generator, head, tail, min, max, end,currentBorder);
+        result = RightToLeftRoute(stationsRoot->right, candidatesNodesRoot, generator, head, tail, min, max, end,
+                                  currentBorder);
     }
 
     //ritorna solo se effettivamente hai trovato end
@@ -1742,88 +1753,33 @@ neighborNode* searchRoute(stationNode* stationsRoot, neighborNode** candidatesNo
         return NULL;
 }
 
-//Imported functions
-//---------------------------------------------
+neighborNode* LeftToRightRoute(stationNode* stationsRoot, neighborNode** candidatesNodesRoot, neighborNode* generator, borderNode** head, borderNode** tail, int min, int max, int end, int currentBorder){
+    neighborNode* result = NULL;
 
-// Function to print binary tree in 2D
-// It does reverse inorder traversal
-void print2DUtil(stationNode* root, int space)
-{
-    // Base case
-    if (root->data == -1)
-        return;
+    if(stationsRoot == Nil)
+        return NULL;
 
-    // Increase distance between levels
-    space += COUNT;
+    if(stationsRoot->data > min)
+        result = LeftToRightRoute(stationsRoot->left, candidatesNodesRoot, generator, head, tail, min, max, end, currentBorder);
 
-    // Process right child first
-    print2DUtil(root->right, space);
-
-    // Print current stationNode after space
-    // count
-    printf("\n");
-    for (int i = COUNT; i < space; i++)
-        printf(" ");
-    printf("%d|%u\n", root->data, root->color);
-
-    // Process left child
-    print2DUtil(root->left, space);
-}
-
-// Wrapper over print2DUtil()
-void print2D(stationNode* root)
-{
-    // Pass initial space count as 0
-    print2DUtil(root, 0);
-}
-
-// Function to print binary tree in 2D
-// It does reverse inorder traversal
-void lightPrint2DUtil(carNode* root, int space)
-{
-    // Base case
-    if (root->data == -1)
-        return;
-
-    // Increase distance between levels
-    space += COUNT;
-
-    // Process right child first
-    lightPrint2DUtil(root->right, space);
-
-    // Print current stationNode after space
-    // count
-    printf("\n");
-    for (int i = COUNT; i < space; i++)
-        printf(" ");
-    printf("%d|%u\n", root->data, root->color);
-
-    // Process left child
-    lightPrint2DUtil(root->left, space);
-}
-
-// Wrapper over print2DUtil()
-void lightPrint2D(carNode* root)
-{
-    // Pass initial space count as 0
-    lightPrint2DUtil(root, 0);
-}
-
-void treeprint(stationNode *root, int level)
-{
-    if (root == Nil)
-        return;
-    for (int i = 0; i < level; i++)
-        printf(i == level - 1 ? "|-" : "  ");
-    printf("%d,%d\n", root->data, root->color);
-    treeprint(root->left, level + 1);
-    treeprint(root->right, level + 1);
-}
-
-int fastAtoi(char * str){
-    int val = 0;
-    while(*str &&  (*str) != ' '){
-        val = val*10 + (*str++ - '0');
+    if(stationsRoot->data >= min &&
+       stationsRoot->data <= max &&
+       (stationsRoot->data - stationsRoot->biggestCar) <= currentBorder &&
+       searchNeighborNode( *candidatesNodesRoot, stationsRoot->data)==NULL)
+    {
+        result = neighborRBInsert(candidatesNodesRoot, generator, stationsRoot->data);
+        if(result->data == end)
+            return result;
+        enqueue(head, tail, createBorderNode(stationsRoot->data));
     }
-    return val;
+
+    if(stationsRoot->data < max){
+        result = LeftToRightRoute(stationsRoot->right, candidatesNodesRoot, generator, head, tail, min, max, end, currentBorder);
+    }
+
+    //ritorna solo se effettivamente hai trovato end
+    if(result != NULL && result->data == end)
+        return result;
+    else
+        return NULL;
 }
