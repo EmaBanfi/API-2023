@@ -212,14 +212,6 @@ int main(){
             end = atoi(param);
 
             routePlanner(stationsRoot, start, end);
-
-            /* 1) inserisci start nella pila della frontiera e nell'albero dei visitati
-             * 2) poppa dalla frontiera il nodo e trova i vicini del nodo tenendo conto di goal e senza tornare indietro, poi inseriscili nei visitati con il puntatore al nodo generatore usando la visita in order
-             * 3) itera fintanto che non trovi goal nei visitati o finisce frontiera
-             * 4) se hai trovato goal stampa la strada dei generatori al contrario
-             * 5) libera la memoria da tutto lo schifo usato
-             */
-
         }
     }
     freeTree(stationsRoot);
@@ -542,6 +534,8 @@ int RBDelete(stationNode** root, int data){
             carsToDelete = wanted->carsRoot;
             wanted->carsRoot = toDelete->carsRoot;
             wanted->biggestCar = toDelete->biggestCar;
+        }else{
+            carsToDelete = toDelete->carsRoot;
         }
 
         //if the deleted stationNode is black then must be invoked the fixup function on the stationNode that replaced the deleted one
