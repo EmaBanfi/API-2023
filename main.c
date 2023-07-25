@@ -5,6 +5,7 @@
 #define COUNT 5
 #define N 20
 #define DIM 32768
+#define M 100
 
 enum color{red, black};
 
@@ -112,26 +113,27 @@ int main(){
     stationNode* stationsRoot = Nil;
     stationNode* newNode = NULL;
     carNode* newCar = NULL;
-    char line[DIM] = {};
-    char * param;
+    char* space;
 
-    while(fgets(line, sizeof(line), stdin)){
+    char line[DIM] = {};
+    while(fgets(line, sizeof(line), stdin)) {
+        *(strchr(line, '\n')) = '\0';
 
         //aggiungi-stazione command
         if(line[12] == 'z'){
-            param = strtok(line + sizeof(char)*18, " ");
-            distance = atoi(param);
-            param = strtok(NULL, " ");
-            numOfCars = atoi(param);
 
+            distance = atoi(line+sizeof(char)*18);
+            space = strchr(line+sizeof(char)*18, ' ');
+            numOfCars = atoi(space + sizeof(char)*1);
             newNode = RBInsert(&stationsRoot, distance);
+
 
             temp = 0;
             max = 0;
             if(newNode != NULL){
                 for( int i = 0; i < numOfCars; i++){
-                    param = strtok(NULL, " ");
-                    autonomy = atoi(param);
+                    space = strchr(space + sizeof(char)*1, ' ');
+                    autonomy = atoi(space + sizeof(char)*1);
                     temp = autonomy;
                     if(temp > max)
                         max = temp;
@@ -143,15 +145,17 @@ int main(){
 
                 printf("aggiunta\n");
             }
-            else
+            else{
                 printf("non aggiunta\n");
+            }
 
         }
 
             //demolisci-stazione command
         else if(line[12] == 'a'){
-            param = strtok(line + sizeof(char)*19, " ");
-            distance = atoi(param);
+
+            distance = atoi(line + sizeof(char)*19);
+
 
             if(stationsRoot != Nil){
                 int ornitorinco = RBDelete(&stationsRoot, distance);
@@ -167,10 +171,11 @@ int main(){
 
             //aggiungi-auto command
         else if(line[12] == 'o'){
-            param = strtok(line + sizeof(char)*14, " ");
-            distance = atoi(param);
-            param = strtok(NULL, " ");
-            autonomy = atoi(param);
+
+            distance = atoi(line+sizeof(char)*14);
+            space = strchr(line+sizeof(char)*14, ' ');
+            autonomy = atoi(space + sizeof(char)*1);
+
 
             newNode = searchNode(stationsRoot, distance);
             if(newNode != NULL){
@@ -184,20 +189,26 @@ int main(){
             }else{
                 printf("non aggiunta\n");
             }
+
         }
 
             //rottama-auto command
         else if(line[12] == ' '){
-            param = strtok(line + sizeof(char)*13, " ");
-            distance = atoi(param);
-            param = strtok(NULL, " ");
-            autonomy = atoi(param);
+
+            distance = atoi(line+sizeof(char)*13);
+            space = strchr(line+sizeof(char)*13, ' ');
+            autonomy = atoi(space + sizeof(char)*1);
 
             newNode = searchNode(stationsRoot, distance);
             if(newNode != NULL && newNode->carsRoot != lightNil){
                 newNode->carsRoot = lightRBDelete(newNode->carsRoot, autonomy);
-                if(autonomy == newNode->biggestCar)
-                    newNode->biggestCar = lightSearchMaximum(newNode->carsRoot)->data;
+
+                if(autonomy == newNode->biggestCar){
+                    if(newNode->carsRoot->data == -1)
+                        newNode->biggestCar = 0;
+                    else
+                        newNode->biggestCar = lightSearchMaximum(newNode->carsRoot)->data;
+                }
             }
             else{
                 printf("non rottamata\n");
@@ -206,10 +217,9 @@ int main(){
 
             //pianifica-percorso command
         else{
-            param = strtok(line + sizeof(char)*19, " ");
-            start = atoi(param);
-            param = strtok(NULL, " ");
-            end = atoi(param);
+            start = atoi(line+sizeof(char)*19);
+            space = strchr(line+sizeof(char)*19, ' ');
+            end = atoi(space + sizeof(char)*1);
 
             routePlanner(stationsRoot, start, end);
         }
@@ -218,6 +228,8 @@ int main(){
     free(Nil);
     free(lightNil);
     free(neighborNil);
+
+
     return 0;
 }
 
@@ -479,7 +491,7 @@ void inOrderVisit(stationNode* root){
 stationNode* searchNode(stationNode* root, int data){
     if (data == root->data)
         return root;
-    else if( root->data == -1)
+    else if(root->data == -1)
         return NULL;
     else if (data < root->data)
         return searchNode(root->left, data);
