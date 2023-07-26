@@ -2,10 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define COUNT 5
-#define N 20
 #define DIM 32768
-#define M 100
 
 enum color{red, black};
 
@@ -54,12 +51,9 @@ void inOrderVisit(stationNode* root);
 stationNode* searchNode(stationNode* root, int data);
 int RBDelete(stationNode** root, int data);
 stationNode* searchMinimum(stationNode* root);
-stationNode* searchMaximum(stationNode* root);
 stationNode* searchSuccessor(stationNode* node);
-stationNode* searchPredecessor(stationNode* node);
 void RBDeleteFixup(stationNode** root, stationNode* node);
 void freeTree(stationNode* root);
-void selectNeighbors(stationNode* root, int min, int max);
 
 //cars-tree functions
 carNode* createLightNode(int data);
@@ -73,7 +67,6 @@ void lightInOrderVisit(carNode* root);
 carNode* lightSearchNode(carNode* root, int data);
 carNode* lightRBDelete(carNode* root, int data);
 carNode* lightRBDeleteFixup(carNode* root, carNode* node);
-carNode* lightSearchPredecessor(carNode* node);
 carNode* lightSearchSuccessor(carNode* node);
 carNode* lightSearchMinimum(carNode* root);
 carNode* lightSearchMaximum(carNode* root);
@@ -525,12 +518,6 @@ int RBDelete(stationNode** root, int data){
         else
             subtree = toDelete->right;
 
-        /*
-        if(subtree->data != -1){
-            subtree->parent = toDelete->parent;
-        }
-         */
-
         subtree->parent = toDelete->parent;
 
         if(toDelete->parent->data == -1)
@@ -582,11 +569,6 @@ void RBDeleteFixup(stationNode** root, stationNode* node){
         //case if stationNode is the left child
         if(node == father->left){
             struct stationNode* brother = father->right;
-            /*
-            if(brother == Nil){
-                print2D(*root);
-            }
-             */
 
             //case 0 : stationNode is red
             if(node->color == red) {
@@ -693,31 +675,6 @@ stationNode* searchSuccessor(stationNode* node){
 }
 
 /**
- * Returns the predecessor of a certain stationNode
- * @param node : stationNode whose predecessor is desired
- * @return pointer to predecessor stationNode, returns NULL if has no predecessor
- */
-stationNode* searchPredecessor(stationNode* node){
-
-    //if has a right subtree => the maximum is the maximum valor of that subtree
-    if(node->left->data != -1){
-        return searchMaximum(node->left);
-    }
-
-    //else the successor is the first parent stationNode that has as right child the subtree in which stationNode is inserted
-    struct stationNode* father = node->parent;
-    while(father->data != -1 &&  father->left == node){
-        node = father;
-        father = father->parent;
-    }
-
-    if(father->data != -1)
-        return father;
-    else
-        return NULL;
-}
-
-/**
  * Search the minimum valor of a specified tree
  * @param root : root of the specified tree
  * @return pointer to the stationNode with minimum integer of the tree
@@ -727,20 +684,6 @@ stationNode* searchMinimum(stationNode* root){
 
     while(current->left->data != -1){
         current = current->left;
-    }
-    return current;
-}
-
-/**
- * Search the maximum valor of a specified tree
- * @param root : root of the specified tree
- * @return pointer to the stationNode with maximum integer of the tree
- */
-stationNode* searchMaximum(stationNode* root){
-    struct stationNode* current = root;
-
-    while(current->right->data != -1){
-        current = current->right;
     }
     return current;
 }
@@ -1053,12 +996,6 @@ carNode* lightRBDelete(carNode* root, int data){
         else
             subtree = toDelete->right;
 
-        /*
-        if(subtree->data != -1){
-            subtree->parent = toDelete->parent;
-        }
-         */
-
         subtree->parent = toDelete->parent;
 
         if(toDelete->parent->data == -1)
@@ -1200,31 +1137,6 @@ carNode* lightSearchSuccessor(carNode* node){
     //else the successor is the first parent stationNode that has as left child the subtree in which stationNode is inserted
     carNode* father = node->parent;
     while(father->data != -1 &&  father->right == node){
-        node = father;
-        father = father->parent;
-    }
-
-    if(father->data != -1)
-        return father;
-    else
-        return NULL;
-}
-
-/**
- * Returns the predecessor of a certain light-stationNode
- * @param node : light-stationNode whose predecessor is desired
- * @return pointer to predecessor light-stationNode, returns NULL if has no predecessor
- */
-carNode* lightSearchPredecessor(carNode* node){
-
-    //if has a right subtree => the maximum is the maximum valor of that subtree
-    if(node->left->data != -1){
-        return lightSearchMaximum(node->left);
-    }
-
-    //else the successor is the first parent stationNode that has as right child the subtree in which stationNode is inserted
-    carNode* father = node->parent;
-    while(father->data != -1 &&  father->left == node){
         node = father;
         father = father->parent;
     }
@@ -1624,13 +1536,6 @@ void readRoute(borderNode** head){
 
 //Route functions
 //---------------------------------------------
-
-/* 1) inserisci start nella pila della frontiera e nell'albero dei visitati
- * 2) dequeue dalla frontiera il nodo e trova i vicini del nodo tenendo conto di goal e senza tornare indietro, poi inseriscili nei visitati con il puntatore al nodo generatore usando la visita in order
- * 3) itera fintanto che non trovi goal nei visitati o finisce frontiera
- * 4) se hai trovato goal stampa la strada dei generatori al contrario
- * 5) libera la memoria da tutto lo schifo usato
- */
 
 /**
  * Calculate the best route from start to end stations
